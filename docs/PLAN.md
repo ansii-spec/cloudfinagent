@@ -65,8 +65,8 @@ browser history, and CSV downloads.
 Each checkbox is roughly one small commit.
 
 ### 1. Foundation
-- [ ] Scaffold Vite, React and TypeScript in `web/`
-- [ ] Add Tailwind and initialise shadcn/ui
+- [x] Scaffold Vite, React and TypeScript in `web/`
+- [x] Add Tailwind and initialise shadcn/ui
 - [ ] Add the theme tokens, based on the monochrome wireframes
 - [ ] Add ESLint, Prettier and a Vitest smoke test
 - [ ] Add CI for lint, typecheck, test and build
