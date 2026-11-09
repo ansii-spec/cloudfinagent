@@ -1,0 +1,73 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as Web UI (Suggestions / Actions)
+    participant API as Backend API
+    participant SS as Suggestion Service
+    participant EX as Action Executor
+    participant AWS as AWS APIs
+    participant MON as Monitor Service
+    participant DB as Database
+
+    U->>UI: Open /suggestions
+    UI->>API: GET /suggestions?status=open
+    API->>DB: Query open suggestions
+    DB-->>API: Suggestions list
+    API-->>UI: 200 OK (suggestions)
+    UI-->>U: Show table (savings, confidence, reason)
+
+    alt Apply suggestion
+        U->>UI: Click "Apply"
+        UI-->>U: Show confirmation modal (current vs recommended, rollback plan)
+        U->>UI: Click "Apply & Monitor"
+        UI->>API: POST /suggestions/{id}/apply
+        API->>SS: validate(id, status=Open)
+        SS->>DB: Snapshot previous config + create Action (Pending)
+        opt Scheduled (maintenance window)
+            SS->>DB: Set status = Scheduled, runAt
+            Note over SS,EX: Executor waits until runAt
+        end
+        SS->>EX: execute(action)
+        EX->>AWS: Apply change (e.g. stop → resize → start)
+        alt Success
+            AWS-->>EX: OK
+            EX->>DB: Action = Applied, Suggestion = Applied
+            EX->>MON: Start monitoring (72h, thresholds)
+            API-->>UI: 200 OK (Applied · monitoring)
+            UI-->>U: Toast "Applied, monitoring 72h"
+        else Failure
+            AWS-->>EX: Error
+            EX->>DB: Action = Failed (error logged)
+            API-->>UI: 500 / Failed
+            UI-->>U: Show "Failed" with Retry
+        end
+
+    else Reject (Dismiss) suggestion
+        U->>UI: Click "Dismiss"
+        UI-->>U: Show dismiss popover (reason)
+        U->>UI: Select reason, confirm
+        UI->>API: POST /suggestions/{id}/dismiss {reason}
+        API->>SS: dismiss(id, reason)
+        SS->>DB: Suggestion = Dismissed, store reason (feedback)
+        API-->>UI: 200 OK
+        UI-->>U: Row shows "Dismissed" + Restore link
+
+    else Revert (Roll back) applied change
+        alt Manual rollback
+            U->>UI: Actions page → "Roll back"
+            UI->>API: POST /actions/{id}/rollback
+            API->>EX: rollback(action)
+        else Automatic rollback
+            MON->>AWS: Poll metrics (CloudWatch)
+            AWS-->>MON: Threshold breached (e.g. CPU > 80% for 15m)
+            MON->>EX: rollback(action)
+        end
+        EX->>DB: Load previous config snapshot
+        DB-->>EX: Previous config
+        EX->>AWS: Restore previous config
+        AWS-->>EX: OK
+        EX->>MON: Stop monitoring
+        EX->>DB: Action = Rolled back, Suggestion = "Not accurate" (re-evaluate)
+        API-->>UI: Status update
+        UI-->>U: Row shows "Rolled back" + Details timeline
+    end
