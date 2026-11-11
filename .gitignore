@@ -6,3 +6,8 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Design material kept locally, not in the repo
+wireframes/
+diagrams/
+docs/
