@@ -18,8 +18,9 @@ import { money, STATUS_LABEL } from '@/lib/format'
 import type { ActionCode, Finding, FindingStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const ALL_STATUSES: FindingStatus[] = ['IDLE', 'NEEDS_REVIEW', 'OVER_PROVISIONED', 'UNDER_PROVISIONED', 'ACTIVE', 'STOPPED', 'INSUFFICIENT_DATA', 'ERROR']
 const SUMMARY: FindingStatus[] = ['IDLE', 'OVER_PROVISIONED', 'UNDER_PROVISIONED', 'NEEDS_REVIEW']
+// compact labels for the summary cards on narrower screens
+const SHORT: Partial<Record<FindingStatus, string>> = { IDLE: 'Idle', OVER_PROVISIONED: 'Over', UNDER_PROVISIONED: 'Under', NEEDS_REVIEW: 'Review' }
 const PAGE_SIZE = 25
 
 function toggle<T>(list: T[], v: T): T[] {
@@ -48,6 +49,9 @@ export default function Recommendations() {
   }), [status, region, band, q, sort, dismissed, page])
   const { data, error, isLoading, refetch } = useFindings(connectionId, filters)
   const reset = (fn: () => void) => { fn(); setPage(1) }
+  const rowAction = (f: Finding) => (f.suggestion?.action && f.suggestion.action !== 'NONE'
+    ? <ApplyButton finding={f} onApply={(a) => setApplying({ finding: f, action: a })} />
+    : <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-accent">{f.status === 'NEEDS_REVIEW' ? 'Review' : 'Details'}</Button>)
 
   if (!connLoading && !current) {
     return <EmptyState icon={<Cloud className="size-8" />} title="Connect your AWS account" body="Recommendations appear after the first scan."
@@ -58,19 +62,19 @@ export default function Recommendations() {
 
   return (
     <div>
-      <PageHeader title="Recommendations" description="Sorted by severity, then confidence." actions={<RunScanButton size="default" />} />
+      <PageHeader title="Recommendations" actions={<RunScanButton size="default" />} />
 
       {/* Summary strip = quick filters */}
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
         {SUMMARY.map((s) => (
           <button key={s} type="button" aria-pressed={status.length === 1 && status[0] === s}
             onClick={() => reset(() => setStatus(status.length === 1 && status[0] === s ? [] : [s]))}
-            className={cn('rounded-lg border bg-card p-3 text-left transition cursor-pointer hover:border-primary/50', status.length === 1 && status[0] === s && 'border-primary ring-2 ring-primary/20')}>
-            <StatusBadge status={s} />
+            className={cn('min-w-0 rounded-lg border bg-card p-3 text-left transition cursor-pointer hover:border-primary/50', status.length === 1 && status[0] === s && 'border-primary ring-2 ring-primary/20')}>
+            <StatusBadge status={s} label={<><span className="lg:hidden">{SHORT[s]}</span><span className="hidden lg:inline">{STATUS_LABEL[s]}</span></>} />
             <p className="mt-2 text-2xl font-semibold tabular-nums">{counts[s] ?? 0}</p>
           </button>
         ))}
-        <div className="col-span-2 rounded-lg border bg-card p-3 sm:col-span-1">
+        <div className="col-span-2 rounded-lg border bg-card p-3 md:col-span-1">
           <p className="text-xs text-muted-foreground">Potential savings</p>
           <p className="mt-2 text-2xl font-semibold text-success tabular-nums">{money(data?.summary.potential_monthly_saving ?? 0, { whole: true })}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
         </div>
@@ -89,16 +93,9 @@ export default function Recommendations() {
           <Select aria-label="Sort" value={sort} onChange={(e) => reset(() => setSort(e.target.value))}>
             <option value="severity">Severity</option><option value="saving">Saving</option><option value="confidence">Confidence</option><option value="name">Name</option>
           </Select>
-          <label className="flex items-center gap-2 text-sm"><Checkbox checked={dismissed} onCheckedChange={(v) => reset(() => setDismissed(v === true))} />Show dismissed ({data?.summary.dismissed ?? 0})</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={dismissed} onCheckedChange={(v) => reset(() => setDismissed(v === true))} />Dismissed ({data?.summary.dismissed ?? 0})</label>
         </div>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
-          {ALL_STATUSES.map((s) => (
-            <button key={s} type="button" aria-pressed={status.includes(s)} onClick={() => reset(() => setStatus(toggle(status, s)))}
-              className={cn('rounded-full border px-2.5 py-0.5 text-xs cursor-pointer', status.includes(s) ? 'border-primary bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}>
-              {STATUS_LABEL[s]}
-            </button>
-          ))}
-          {(data?.summary.regions.length ?? 0) > 1 && <span className="mx-1 w-px bg-border" aria-hidden="true" />}
+        <div className="flex flex-wrap gap-1.5 empty:hidden" role="group" aria-label="Filter by region">
           {(data?.summary.regions.length ?? 0) > 1 && data?.summary.regions.map((r) => (
             <button key={r} type="button" aria-pressed={region.includes(r)} onClick={() => reset(() => setRegion(toggle(region, r)))}
               className={cn('rounded-full border px-2.5 py-0.5 font-mono text-xs cursor-pointer', region.includes(r) ? 'border-primary bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}>
@@ -119,8 +116,10 @@ export default function Recommendations() {
               <caption className="sr-only">Recommendations</caption>
               <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                 <tr>
-                  {['Instance', 'Region', 'Type', 'Status', 'Confidence', 'Suggestion', 'Est. $/month', 'Risk', ''].map((h, i) => (
-                    <th key={i} scope="col" className="px-3 py-2 font-medium">{h || <span className="sr-only">Action</span>}</th>
+                  {/* Less important columns drop out first as the screen narrows */}
+                  {[['Instance', ''], ['Region', 'hidden xl:table-cell'], ['Type', 'hidden xl:table-cell'], ['Status', ''],
+                    ['Confidence', 'hidden xl:table-cell'], ['Suggestion', ''], ['$ / month', 'text-right'], ['', 'hidden xl:table-cell']].map(([h, cls], i) => (
+                    <th key={i} scope="col" className={cn('px-3 py-2 font-medium whitespace-nowrap', cls)}>{h || <span className="sr-only">Action</span>}</th>
                   ))}
                 </tr>
               </thead>
@@ -129,20 +128,19 @@ export default function Recommendations() {
                   <tr key={f.id} tabIndex={0} onClick={() => navigate(`/recommendations/${f.id}`)}
                     onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/recommendations/${f.id}`) }}
                     className="cursor-pointer border-t hover:bg-muted/40 focus:bg-muted/40">
-                    <td className="px-3 py-2.5"><p className="font-medium">{f.name || '(no name)'}</p><p className="font-mono text-xs text-muted-foreground">{f.instance_id}</p></td>
-                    <td className="px-3 py-2.5 font-mono text-xs">{f.region}</td>
-                    <td className="px-3 py-2.5 font-mono text-xs">{f.instance_type}</td>
+                    <td className="px-3 py-2.5">{f.suggestion?.risk && <div className="mb-1"><RiskChip risk={f.suggestion.risk} /></div>}<p className="font-medium whitespace-nowrap">{f.name || '(no name)'}</p>
+                      <p className="font-mono text-xs whitespace-nowrap text-muted-foreground">{f.instance_id}</p>
+                      <p className="font-mono text-xs whitespace-nowrap text-muted-foreground xl:hidden">{f.instance_type} · {f.region}</p></td>
+                    <td className="hidden px-3 py-2.5 font-mono text-xs whitespace-nowrap xl:table-cell">{f.region}</td>
+                    <td className="hidden px-3 py-2.5 font-mono text-xs whitespace-nowrap xl:table-cell">{f.instance_type}</td>
                     <td className="px-3 py-2.5"><StatusBadge status={f.status} /></td>
-                    <td className="px-3 py-2.5"><ConfidenceBar score={f.confidence.score} band={f.confidence.band} /></td>
-                    <td className="max-w-[16rem] px-3 py-2.5"><p className="truncate" title={f.reason}>{f.suggestion?.headline}</p>
-                      {f.action_state !== 'none' && <p className="text-xs text-muted-foreground">action {f.action_state.replace('_', ' ')}</p>}</td>
-                    <td className="px-3 py-2.5"><MonthlyDelta delta={f.monthly_delta_usd} /></td>
-                    <td className="px-3 py-2.5"><RiskChip risk={f.suggestion?.risk} /></td>
-                    <td className="px-3 py-2.5 text-right">
-                      {f.suggestion?.action && f.suggestion.action !== 'NONE'
-                        ? <ApplyButton finding={f} onApply={(a) => setApplying({ finding: f, action: a })} />
-                        : <Button size="sm" variant="ghost">{f.status === 'NEEDS_REVIEW' ? 'Review' : 'Details'}</Button>}
-                    </td>
+                    <td className="hidden px-3 py-2.5 xl:table-cell"><ConfidenceBar score={f.confidence.score} band={f.confidence.band} showBand={false} /></td>
+                    <td className="max-w-64 min-w-40 px-3 py-2.5"><p className="truncate" title={f.reason}>{f.suggestion?.headline}</p>
+                      {f.action_state !== 'none' && (!f.suggestion || f.suggestion.action === 'NONE') && <p className="text-xs text-muted-foreground">action {f.action_state.replace('_', ' ')}</p>}
+                      {/* narrower screens: the action sits under the suggestion instead of its own column */}
+                      <div className="mt-2 xl:hidden">{rowAction(f)}</div></td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap"><MonthlyDelta delta={f.monthly_delta_usd} suffix={false} /></td>
+                    <td className="hidden px-3 py-2.5 text-right whitespace-nowrap xl:table-cell">{rowAction(f)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -154,7 +152,7 @@ export default function Recommendations() {
               <li key={f.id}>
                 <button type="button" onClick={() => navigate(`/recommendations/${f.id}`)} className="w-full rounded-lg border bg-card p-4 text-left">
                   <div className="flex items-start justify-between gap-2">
-                    <div><p className="font-medium">{f.name || f.instance_id}</p><p className="font-mono text-xs text-muted-foreground">{f.instance_type} · {f.region}</p></div>
+                    <div>{f.suggestion?.risk && <div className="mb-1"><RiskChip risk={f.suggestion.risk} /></div>}<p className="font-medium">{f.name || f.instance_id}</p><p className="font-mono text-xs text-muted-foreground">{f.instance_type} · {f.region}</p></div>
                     <StatusBadge status={f.status} />
                   </div>
                   <p className="mt-2 text-sm">{f.suggestion?.headline}</p>

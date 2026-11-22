@@ -3,12 +3,12 @@ import type { Risk } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 /** Monthly delta: savings in green (−$210), cost increases in neutral blue (+$30), never red. */
-export function MonthlyDelta({ delta, className }: { delta: number | null | undefined; className?: string }) {
+export function MonthlyDelta({ delta, className, suffix = true }: { delta: number | null | undefined; className?: string; suffix?: boolean }) {
   if (delta == null || delta === 0) return <span className={cn('text-muted-foreground', className)}>—</span>
   return (
     <span className={cn('font-medium tabular-nums', delta < 0 ? 'text-success' : 'text-info', className)}>
       {signedMoney(delta)}
-      <span className="text-xs font-normal text-muted-foreground">/mo</span>
+      {suffix && <span className="text-xs font-normal text-muted-foreground">/mo</span>}
     </span>
   )
 }

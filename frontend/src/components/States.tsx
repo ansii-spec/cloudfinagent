@@ -47,9 +47,8 @@ export function PageHeader({ title, description, actions }: { title: string; des
 
 export function EstimateFootnote() {
   return (
-    <p className="mt-8 text-xs text-muted-foreground">
-      All amounts are <strong>estimates</strong> based on Linux on-demand list prices in each instance's region (730 h/month).
-      Reserved Instances, Savings Plans, Spot, data transfer and EBS storage are not modelled. Windows / BYOL pricing is not supported.
+    <p className="mt-8 text-xs text-muted-foreground" title="Reserved Instances, Savings Plans, Spot, data transfer and EBS are not modelled.">
+      Costs are estimates based on Linux on-demand list prices.
     </p>
   )
 }

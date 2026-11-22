@@ -28,7 +28,7 @@ describe('Recommendations', () => {
     })
     renderWithProviders(<ConnectionProvider><Routes><Route path="/recommendations" element={<Recommendations />} /></Routes></ConnectionProvider>, { route: '/recommendations' })
     expect((await screen.findAllByText('reporting-worker')).length).toBeGreaterThan(0)
-    await userEvent.click(screen.getAllByRole('button', { pressed: false }).find((b) => b.textContent?.startsWith('Idle1'))!)
+    await userEvent.click(screen.getAllByRole('button', { pressed: false }).find((b) => b.querySelector('[data-status=IDLE]') != null)!)
     await waitFor(() => expect(screen.queryAllByText('reporting-worker')).toHaveLength(0))
     expect(calls.some((c) => c.includes('status=IDLE'))).toBe(true)
   })

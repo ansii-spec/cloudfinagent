@@ -1,5 +1,5 @@
-import { ArrowRight, Cloud, Info, PiggyBank, Rocket, TrendingUp, Wallet } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Cloud } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useDashboard } from '@/api/hooks'
@@ -7,11 +7,10 @@ import { RunScanButton } from '@/components/AppShell'
 import { EmptyState, ErrorState, EstimateFootnote, PageHeader } from '@/components/States'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tip } from '@/components/ui/tooltip'
 import { useConnectionCtx } from '@/context/ConnectionProvider'
-import { KIND_LABEL, money, relativeTime, shortDate } from '@/lib/format'
+import { KIND_LABEL, money, shortDate } from '@/lib/format'
 import type { DashboardSummary, FindingStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -20,31 +19,14 @@ const KIND_COLOR: Record<string, string> = { RESIZE_DOWN: 'var(--chart-1)', STOP
 const RANGES = [['30d', '30 days'], ['90d', '90 days'], ['12m', '12 months'], ['all', 'All']] as const
 const TOOLTIP_STYLE = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--foreground)' }
 
-function useCountUp(target: number, ms = 900): number {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(target); return }
-    let raf = 0
-    const t0 = performance.now()
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / ms)
-      setV(target * (1 - Math.pow(1 - p, 3)))
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, ms])
-  return v
-}
-
-function Hero({ label, value, sub, icon: Icon, accent, children }: {
-  label: string; value: number; sub?: React.ReactNode; icon: typeof Wallet; accent?: boolean; children?: React.ReactNode
+function Stat({ label, value, sub, tone, children }: {
+  label: string; value: string; sub?: React.ReactNode; tone?: 'success' | 'info'; children?: React.ReactNode
 }) {
   return (
-    <Card className={cn(accent && 'border-primary/40')}>
-      <CardContent className="pt-5">
-        <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Icon className="size-4" aria-hidden="true" />{label}</p>
-        <p className={cn('mt-2 text-3xl font-semibold tabular-nums', accent && 'text-success')}>{money(value, { whole: true })}</p>
+    <Card>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={cn('mt-2 text-3xl font-bold tabular-nums', tone === 'success' && 'text-success', tone === 'info' && 'text-info')}>{value}</p>
         {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
         {children}
       </CardContent>
@@ -56,7 +38,6 @@ export default function Dashboard() {
   const { connectionId, current, isLoading: connLoading } = useConnectionCtx()
   const [range, setRange] = useState('90d')
   const { data, error, isLoading, refetch } = useDashboard(connectionId, range)
-  const saved = useCountUp(data?.realized.cumulative ?? 0)
 
   if (!connLoading && !current) {
     return <EmptyState icon={<Cloud className="size-8" />} title="Connect your AWS account to start"
@@ -65,7 +46,7 @@ export default function Dashboard() {
   }
   return (
     <div>
-      <PageHeader title="Savings dashboard" description={`Last scan ${relativeTime(data?.last_scan_at)}`}
+      <PageHeader title="Dashboard"
         actions={<>
           <div role="group" aria-label="Range" className="inline-flex rounded-md border bg-card p-0.5">
             {RANGES.map(([v, l]) => (
@@ -76,7 +57,7 @@ export default function Dashboard() {
           <RunScanButton size="default" />
         </>} />
       {error ? <ErrorState error={error} onRetry={() => refetch()} /> : isLoading || !data ? <DashSkeleton /> : (
-        <DashBody d={data} saved={saved} />
+        <DashBody d={data} />
       )}
     </div>
   )
@@ -91,7 +72,7 @@ function DashSkeleton() {
   )
 }
 
-function DashBody({ d, saved }: { d: DashboardSummary; saved: number }) {
+function DashBody({ d }: { d: DashboardSummary }) {
   const [view, setView] = useState<'cumulative' | 'daily'>('cumulative')
   const noActions = d.actions.applied === 0
   const pctLess = d.spend.before_monthly > 0 ? Math.round((1 - d.spend.current_monthly / d.spend.before_monthly) * 100) : 0
@@ -102,40 +83,30 @@ function DashBody({ d, saved }: { d: DashboardSummary; saved: number }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Hero label="Saved so far" value={saved} icon={PiggyBank} accent sub={`${money(d.realized.this_month)} this month`} />
-        <Hero label="Monthly run-rate" value={d.realized.monthly_run_rate} icon={TrendingUp} sub={`${d.actions.applied} applied · ${d.actions.undone} undone · ${d.actions.failed} failed`} />
-        <Hero label="Potential savings" value={d.potential.monthly} icon={Wallet} sub="per month, open recommendations">
-          <Button asChild size="sm" variant="outline" className="mt-3"><Link to="/recommendations">Review {d.potential.open_findings} recommendations<ArrowRight /></Link></Button>
-        </Hero>
-        <Card><CardContent className="pt-5">
-          <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Rocket className="size-4" aria-hidden="true" />Invested in performance</p>
-          <p className="mt-2 text-xl font-semibold tabular-nums text-info">{money(d.invested.monthly)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
-          <p className="mt-1 text-xs text-muted-foreground">Upsizes; not subtracted from savings.</p>
-        </CardContent></Card>
+        <Stat label="Saved so far" value={money(d.realized.cumulative, { whole: true })} tone="success" sub={`${money(d.realized.this_month)} this month`} />
+        <Stat label="Monthly run-rate" value={money(d.realized.monthly_run_rate, { whole: true })} sub={`${d.actions.applied} applied, ${d.actions.undone} undone, ${d.actions.failed} failed`} />
+        <Stat label="Potential savings / month" value={money(d.potential.monthly, { whole: true })}>
+          <Link to="/recommendations" className="mt-1 inline-block text-xs text-primary hover:underline">Review {d.potential.open_findings} recommendations</Link>
+        </Stat>
+        <Stat label="Upsizing cost / month" value={money(d.invested.monthly, { whole: true })} tone="info" sub="Not subtracted from savings" />
       </div>
 
-      {/* Before / after strip */}
-      <Card><CardContent className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-5 text-sm">
-        <span className="text-muted-foreground">Your EC2 spend estimate:</span>
-        <span>before <strong className="tabular-nums">{money(d.spend.before_monthly, { whole: true })}/mo</strong></span>
-        <ArrowRight className="size-4 text-muted-foreground" aria-hidden="true" />
-        <span>now <strong className="tabular-nums">{money(d.spend.current_monthly, { whole: true })}/mo</strong></span>
-        {pctLess > 0 && <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">−{pctLess} %</span>}
-        <Tip content="Σ hourly list price of running instances × 730. Before = now + realized run-rate − invested. Not your AWS bill.">
-          <button type="button" aria-label="How this is calculated" className="ml-auto text-muted-foreground cursor-pointer"><Info className="size-4" /></button>
-        </Tip>
-      </CardContent></Card>
+      <p className="text-sm text-muted-foreground" title="Sum of list prices of running instances × 730 h. Not your AWS bill.">
+        Estimated EC2 spend: <span className="text-foreground tabular-nums">{money(d.spend.before_monthly, { whole: true })}</span> before,{' '}
+        <strong className="text-foreground tabular-nums">{money(d.spend.current_monthly, { whole: true })}</strong> now per month
+        {pctLess > 0 && <span className="text-success"> ({pctLess} % lower)</span>}
+      </p>
 
       {noActions && (
-        <EmptyState icon={<PiggyBank className="size-8" />} title="Apply your first recommendation to start saving"
+        <EmptyState title="Apply your first recommendation to start saving"
           body={<>You could save <strong className="text-success">{money(d.potential.monthly)}/mo</strong> right now.</>}
           action={<Button asChild><Link to="/recommendations">See recommendations</Link></Button>} />
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-start justify-between">
-            <div><CardTitle>Savings over time</CardTitle><CardDescription>{view === 'cumulative' ? 'Cumulative realized savings (USD)' : 'Savings per day (USD)'}</CardDescription></div>
+          <CardHeader className="flex-row items-center justify-between">
+            <div><CardTitle>Savings over time</CardTitle></div>
             <div role="group" aria-label="Chart view" className="inline-flex rounded-md border p-0.5">
               {(['cumulative', 'daily'] as const).map((v) => (
                 <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}
@@ -171,7 +142,7 @@ function DashBody({ d, saved }: { d: DashboardSummary; saved: number }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Savings by action type</CardTitle><CardDescription>Cumulative, all time</CardDescription></CardHeader>
+          <CardHeader><CardTitle>By action type</CardTitle></CardHeader>
           <CardContent>
             {pie.length === 0 ? <p className="py-16 text-center text-sm text-muted-foreground">No data yet</p> : (
               <>
@@ -227,14 +198,18 @@ function DashBody({ d, saved }: { d: DashboardSummary; saved: number }) {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Findings health</CardTitle><CardDescription>Latest scan · click to filter</CardDescription></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2">
-            {health.map((s) => (
-              <Link key={s} to={`/recommendations?status=${s}`} className="rounded-md border p-2 hover:bg-muted">
-                <StatusBadge status={s} className="max-w-full" />
-                <p className="mt-1 text-lg font-semibold tabular-nums">{d.counts[s.toLowerCase()] ?? 0}</p>
-              </Link>
-            ))}
+          <CardHeader><CardTitle>Findings</CardTitle></CardHeader>
+          <CardContent className="py-2">
+            <ul className="divide-y">
+              {health.filter((st) => (d.counts[st.toLowerCase()] ?? 0) > 0).map((st) => (
+                <li key={st}>
+                  <Link to={`/recommendations?status=${st}`} className="flex items-center justify-between py-2 hover:text-primary">
+                    <StatusBadge status={st} />
+                    <span className="font-bold tabular-nums">{d.counts[st.toLowerCase()]}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       </div>

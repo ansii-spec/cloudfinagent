@@ -13,7 +13,7 @@ export function BandChip({ band }: { band: Band }) {
   return <span className={cn('rounded px-1.5 py-0.5 text-[11px] font-semibold', BAND[band])}>{band === 'NONE' ? '—' : band}</span>
 }
 
-export function ConfidenceBar({ score, band }: { score: number; band: Band }) {
+export function ConfidenceBar({ score, band, showBand = true }: { score: number; band: Band; showBand?: boolean }) {
   if (band === 'NONE') return <span className="text-xs text-muted-foreground">—</span>
   const v = Math.max(0, Math.min(100, score))
   return (
@@ -22,7 +22,7 @@ export function ConfidenceBar({ score, band }: { score: number; band: Band }) {
         <div className={cn('h-full rounded-full', BAR[band])} style={{ width: `${v}%` }} />
       </div>
       <span className="w-9 text-xs tabular-nums">{Math.round(v)} %</span>
-      <BandChip band={band} />
+      {showBand && <BandChip band={band} />}
     </div>
   )
 }

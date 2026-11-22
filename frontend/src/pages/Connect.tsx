@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, Copy, ExternalLink, Eye, Info, Loader2, Sparkles, Wrench, XCircle } from 'lucide-react'
+import { Check, CheckCircle2, Copy, ExternalLink, Info, Loader2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -76,20 +76,20 @@ function StepAccess({ onCreated }: { onCreated: (id: string) => void }) {
   const [actions, setActions] = useState(false)
   const [label, setLabel] = useState('Production')
   const cards = [
-    { value: false, icon: Eye, title: 'Read-only (analysis)', badge: 'Recommended to start',
+    { value: false, title: 'Read-only (analysis)', badge: 'Recommended to start',
       body: 'We can read EC2 and CloudWatch data and show recommendations. Nothing in your account can be changed.' },
-    { value: true, icon: Wrench, title: 'Read + Actions (one-click fixes)', badge: null,
+    { value: true, title: 'Read + Actions (one-click fixes)', badge: null,
       body: 'Also allows stop / start / resize / terminate and credit changes — only when you click Apply and confirm.' },
   ]
   return (
     <div className="max-w-4xl">
-      <PageHeader title="Connect your AWS account" description="Secure, keyless access with a cross-account IAM role and a unique External ID." />
+      <PageHeader title="Connect your AWS account" description="Access uses an IAM role in your account. No access keys are shared." />
       <Stepper step={0} />
       <div className="grid gap-4 md:grid-cols-2" role="radiogroup" aria-label="Access level">
         {cards.map((c) => (
           <button key={c.title} type="button" role="radio" aria-checked={actions === c.value} onClick={() => setActions(c.value)}
             className={cn('rounded-lg border bg-card p-5 text-left transition cursor-pointer', actions === c.value ? 'border-primary ring-2 ring-primary/30' : 'hover:border-muted-foreground/40')}>
-            <div className="flex items-center gap-2"><c.icon className="size-5 text-primary" aria-hidden="true" /><span className="font-semibold">{c.title}</span></div>
+            <span className="font-bold">{c.title}</span>
             {c.badge && <span className="mt-2 inline-block rounded bg-accent px-2 py-0.5 text-xs text-accent-foreground">{c.badge}</span>}
             <p className="mt-2 text-sm text-muted-foreground">{c.body}</p>
           </button>
@@ -107,7 +107,7 @@ function StepAccess({ onCreated }: { onCreated: (id: string) => void }) {
           <Button variant="outline" disabled={demo.isPending} onClick={() => demo.mutate(undefined, {
             onSuccess: (c) => { setConnectionId(c.id); toast.success('Demo account connected — first scan running'); navigate('/recommendations') },
             onError: (e) => toast.error(e.message),
-          })}><Sparkles />Use demo account</Button>
+          })}>Use demo account</Button>
         )}
       </div>
       <p className="mt-8 text-xs text-muted-foreground">You can revoke access any time by deleting the CloudFormation stack.</p>

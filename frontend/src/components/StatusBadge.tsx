@@ -14,12 +14,12 @@ const STYLE: Record<FindingStatus, [text: string, dot: string]> = {
   ERROR: ['text-destructive', 'border-2 border-destructive bg-transparent'],
 }
 
-export function StatusBadge({ status, className }: { status: FindingStatus; className?: string }) {
+export function StatusBadge({ status, className, label }: { status: FindingStatus; className?: string; label?: React.ReactNode }) {
   const [text, dot] = STYLE[status]
   return (
     <span className={cn('inline-flex items-center gap-1.5 text-sm font-medium whitespace-nowrap', text, className)} data-status={status}>
       <span className={cn('size-2 shrink-0 rounded-full', dot)} aria-hidden="true" />
-      {STATUS_LABEL[status]}
+      {label ?? STATUS_LABEL[status]}
     </span>
   )
 }

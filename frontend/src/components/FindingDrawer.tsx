@@ -1,4 +1,3 @@
-import { AlertTriangle, BellOff, ExternalLink, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -79,9 +78,9 @@ function DrawerBody({ f, onApply }: { f: FindingDetail; onApply: (a: ActionCode)
       <div className="mt-3"><ConfidenceBar score={f.confidence.score} band={f.confidence.band} /></div>
       {Object.keys(f.tags).length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">
-          {Object.entries(f.tags).filter(([k]) => !k.startsWith('_')).map(([k, v]) => (
+          {Object.entries(f.tags).filter(([k]) => !k.startsWith('_') && k !== 'Name').map(([k, v]) => (
             <Badge key={k} className={isProtective(k, v) ? 'border-warning/50 bg-warning/10 text-warning' : 'bg-muted'}>
-              {isProtective(k, v) && <ShieldCheck aria-label="protective tag" />}{k}={v}
+              {k}={v}
             </Badge>
           ))}
         </div>
@@ -108,7 +107,7 @@ function DrawerBody({ f, onApply }: { f: FindingDetail; onApply: (a: ActionCode)
           <div className="mt-4 flex flex-wrap gap-2">
             {s.action !== 'NONE' && <ApplyButton finding={f} onApply={onApply} size="default" />}
             {s.alternative_actions.map((alt) => (
-              <ApplyButton key={alt} finding={f} action={alt} onApply={onApply} size="default" variant="outline" label={`Alternative: ${ACTION_SHORT[alt]}`} />
+              <ApplyButton key={alt} finding={f} action={alt} onApply={onApply} size="default" variant="outline" label={ACTION_SHORT[alt]} />
             ))}
             <DismissButton f={f} />
           </div>
@@ -116,7 +115,7 @@ function DrawerBody({ f, onApply }: { f: FindingDetail; onApply: (a: ActionCode)
       )}
 
       {/* 3. Explainability */}
-      <Section title="Why we think so">
+      <Section title="Analysis">
         <div className="grid gap-3 sm:grid-cols-3">
           <ScoreGauge label="Idle" score={f.idle?.score} threshold={th?.idle_threshold ?? 65} hit={(f.idle?.score ?? 0) >= (th?.idle_threshold ?? 65)} />
           <ScoreGauge label="Over-provisioned" score={overScore} threshold={th?.over_threshold ?? 60} hit={(overScore ?? 0) >= (th?.over_threshold ?? 60)} />
@@ -130,20 +129,23 @@ function DrawerBody({ f, onApply }: { f: FindingDetail; onApply: (a: ActionCode)
           <Tile label="Data quality" value={f.data_quality != null ? `${Math.round(f.data_quality * 100)} %` : '—'} />
           <Tile label="Hours analysed" value={String(f.hours_analyzed)} />
         </div>
-        <p className="mt-3 rounded-md bg-muted p-3 font-mono text-xs">{f.reason}</p>
+        <details className="mt-3 text-xs">
+          <summary className="cursor-pointer text-muted-foreground">Raw pipeline output</summary>
+          <p className="mt-2 rounded-md bg-muted p-3 font-mono">{f.reason}</p>
+        </details>
         {blocked.length > 0 && (
           <div className="mt-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
-            <p className="flex items-center gap-2 font-medium"><ShieldCheck className="size-4" aria-hidden="true" />Not declared idle because of:</p>
+            <p className="font-medium">Not declared idle because of:</p>
             <ul className="mt-1 list-disc pl-5">{blocked.map((b) => <li key={b}>{b}</li>)}</ul>
           </div>
         )}
         {!f.has_memory_metric && f.status !== 'STOPPED' && (
           <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <Badge className="border-warning/50 bg-warning/10 text-warning"><AlertTriangle aria-hidden="true" />Memory not monitored – lower confidence</Badge>
-            <Link to="/help/cloudwatch-agent" className="inline-flex items-center gap-1 text-primary hover:underline">How to install the CloudWatch agent<ExternalLink className="size-3" aria-hidden="true" /></Link>
+            <Badge className="border-warning/50 bg-warning/10 text-warning">Memory not monitored, lower confidence</Badge>
+            <Link to="/help/cloudwatch-agent" className="inline-flex items-center gap-1 text-primary hover:underline">How to install the CloudWatch agent</Link>
           </p>
         )}
-        <h4 className="mt-5 mb-2 text-xs font-semibold text-muted-foreground uppercase">Pipeline evidence steps</h4>
+        <h4 className="mt-5 mb-2 text-sm font-bold">Evidence</h4>
         <EvidenceTable steps={f.evidence_steps} />
       </Section>
 
@@ -195,7 +197,7 @@ function DismissButton({ f }: { f: FindingDetail }) {
   })
   return (
     <>
-      <Button variant="ghost" onClick={() => setOpen(true)}><BellOff />Dismiss</Button>
+      <Button variant="ghost" onClick={() => setOpen(true)}>Dismiss</Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Keep as is?" description="The recommendation is hidden from the list and its saving is excluded from the dashboard.">
           <div className="space-y-2">

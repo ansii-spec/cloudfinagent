@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CircleUser, Cloud, History, LayoutDashboard, ListChecks, LogOut, Menu, Moon, Play, Settings, Sun, X } from 'lucide-react'
+import { AlertTriangle, CircleUser, Cloud, History, LayoutDashboard, ListChecks, LogOut, Menu, Moon, Settings, Sun, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -71,12 +71,12 @@ export function RunScanButton({ size = 'sm' }: { size?: 'sm' | 'default' }) {
   const last = scans.data?.items.find((s) => s.finished_at)
   return (
     <div className="flex items-center gap-2">
-      <span className="hidden text-xs text-muted-foreground lg:inline">Last scanned {relativeTime(last?.finished_at)}</span>
+      <span className="hidden text-xs text-muted-foreground lg:inline">Scanned {relativeTime(last?.finished_at)}</span>
       <Button size={size} disabled={disabled} onClick={() => start.mutate(undefined, {
         onSuccess: () => toast.success('Scan started'),
         onError: (e) => toast.error(e.message),
       })}>
-        <Play />{running ? 'Scanning…' : 'Run scan'}
+        {running ? 'Scanning…' : 'Run scan'}
       </Button>
     </div>
   )
@@ -96,21 +96,25 @@ export default function AppShell() {
   useEffect(() => applyTheme(theme), [theme])
   const usable = connections.filter((c) => c.status !== 'pending')
 
-  const nav = (
+  const renderNav = (mini: boolean) => (
     <nav aria-label="Main" className="flex-1 py-4">
       <ul>
-        {NAV.map((n) => (
-          <li key={n.to}>
-            <NavLink to={n.to} onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => cn('flex items-center gap-3 border-l-4 py-2 pr-4 pl-5 text-sm',
+        {NAV.map((n) => {
+          const link = (
+            <NavLink to={n.to} onClick={() => setMenuOpen(false)} aria-label={mini ? n.label : undefined}
+              className={({ isActive }) => cn('flex items-center gap-3 border-l-4 py-2 text-sm',
+                mini ? 'h-10 justify-center pr-1 pl-0' : 'pr-4 pl-5',
                 isActive ? 'border-primary bg-accent font-bold text-accent-foreground' : 'border-transparent hover:bg-muted')}>
-              <n.icon className="size-4" aria-hidden="true" />{n.label}
+              <n.icon className="size-4 shrink-0" aria-hidden="true" />{!mini && n.label}
             </NavLink>
-          </li>
-        ))}
+          )
+          // Tooltip gets its own wrapper: merging into NavLink would clobber its function className
+          return <li key={n.to}>{mini ? <Tip content={n.label} side="right"><div>{link}</div></Tip> : link}</li>
+        })}
       </ul>
     </nav>
   )
+  const nav = renderNav(false)
 
   const headerBtn = 'text-header-foreground hover:bg-white/10 hover:text-header-foreground'
   return (
@@ -120,7 +124,7 @@ export default function AppShell() {
         <Link to="/dashboard"><Logo /></Link>
         {usable.length > 0 && (
           <Select aria-label="AWS connection" value={current?.id ?? ''} onChange={(e) => setConnectionId(e.target.value)}
-            className="ml-4 hidden h-8 max-w-[15rem] border-white/30 bg-transparent text-header-foreground sm:block [&>option]:text-foreground">
+            className="ml-4 hidden h-8 max-w-60 border-white/30 bg-transparent text-header-foreground sm:block [&>option]:text-foreground">
             {usable.map((c) => (
               <option key={c.id} value={c.id}>{c.label}{c.aws_account_id ? ` · ${c.aws_account_id}` : ''}</option>
             ))}
@@ -154,21 +158,17 @@ export default function AppShell() {
       )}
 
       <div className="flex flex-1">
-        <aside className="sticky top-12 hidden h-[calc(100svh-3rem)] w-60 shrink-0 flex-col border-r bg-sidebar md:flex">
-          {nav}
-          <div className="border-t px-5 py-4 text-xs text-muted-foreground">
-            <p className="font-bold text-foreground">{current?.label ?? 'No account connected'}</p>
-            {current?.aws_account_id && <p className="mt-0.5 font-mono">{current.aws_account_id}</p>}
-            <p className="mt-1">v{config?.version ?? '1.0.0'} · estimates only</p>
-          </div>
+        {/* Always collapsed: icons only, the page name shows on hover / keyboard focus */}
+        <aside className="sticky top-12 hidden h-[calc(100svh-3rem)] w-14 shrink-0 flex-col border-r bg-sidebar md:flex">
+          {renderNav(true)}
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
         <main className="w-full min-w-0 flex-1 p-4 md:p-8">
           {config?.demo_mode && !demoDismissed && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-info/30 bg-info/10 px-4 py-2 text-sm">
-              <span><strong>Demo mode:</strong> sample data, no AWS account is touched.</span>
-              <Button variant="ghost" size="icon" aria-label="Dismiss demo banner" onClick={() => {
+            <div className="mb-6 flex items-center justify-between gap-3 border-b pb-2 text-xs text-muted-foreground">
+              <span>Demo mode: sample data, no AWS account is used.</span>
+              <Button variant="ghost" size="icon" className="size-6" aria-label="Dismiss demo notice" onClick={() => {
                 setDemoDismissed(true)
                 try { sessionStorage.setItem('ec2opt.demoBanner', '1') } catch { /* ignore */ }
               }}><X /></Button>

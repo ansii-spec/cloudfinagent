@@ -1,24 +1,19 @@
-import { ArrowRight, KeyRound, Server, ShieldCheck, Timer, UserCog } from 'lucide-react'
-
 const STEPS = [
-  { icon: UserCog, title: 'You create an IAM role', body: 'in your own AWS account (CloudFormation)' },
-  { icon: KeyRound, title: 'You share Role ARN + External ID', body: 'identifiers, not secrets — no access keys' },
-  { icon: Server, title: 'We call STS AssumeRole', body: 'with your role ARN and External ID' },
-  { icon: ShieldCheck, title: 'STS validates the trust', body: 'trust policy + External ID must match' },
-  { icon: Timer, title: 'Temporary credentials (~1 h)', body: 'used only for the API calls we need' },
+  ['You create an IAM role', 'in your AWS account (CloudFormation)'],
+  ['You share the Role ARN and External ID', 'identifiers, not secrets'],
+  ['We call STS AssumeRole', 'with that ARN and External ID'],
+  ['STS checks the trust policy', 'the External ID must match'],
+  ['Temporary credentials (1 h)', 'used only for the calls we need'],
 ]
 
 export function SecurityFlowDiagram() {
   return (
-    <ol aria-label="How secure access works" className="grid gap-2 sm:grid-cols-5">
-      {STEPS.map((s, i) => (
-        <li key={s.title} className="relative flex flex-col items-center gap-1 rounded-md border bg-card p-3 text-center">
-          <span className="flex size-9 items-center justify-center rounded-full bg-accent text-accent-foreground"><s.icon className="size-4" aria-hidden="true" /></span>
-          <span className="text-xs font-semibold">{i + 1}. {s.title}</span>
-          <span className="text-[11px] text-muted-foreground">{s.body}</span>
-          {i < STEPS.length - 1 && (
-            <ArrowRight aria-hidden="true" className="absolute top-1/2 -right-3 hidden size-4 -translate-y-1/2 text-muted-foreground sm:block" />
-          )}
+    <ol aria-label="How access works" className="grid gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-5">
+      {STEPS.map(([title, body], i) => (
+        <li key={title} className="bg-card p-3">
+          <p className="text-xs text-muted-foreground">Step {i + 1}</p>
+          <p className="mt-1 text-sm font-bold">{title}</p>
+          <p className="text-xs text-muted-foreground">{body}</p>
         </li>
       ))}
     </ol>

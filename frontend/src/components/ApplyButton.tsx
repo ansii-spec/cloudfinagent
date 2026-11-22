@@ -1,4 +1,3 @@
-import { ShieldAlert } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { Tip } from '@/components/ui/tooltip'
@@ -29,11 +28,14 @@ export function ApplyButton({ finding, action, onApply, size = 'sm', variant, la
   const readOnly = !(current?.enable_actions && current?.actions_verified)
   const act = action ?? (finding.suggestion?.action as ActionCode | undefined)
   const reason = applyBlockReason(finding, readOnly)
+  if (!action && (finding.cooldown_until || finding.action_state === 'in_progress')) {
+    return <span className="text-xs text-muted-foreground" title={reason ?? undefined}>{finding.action_state === 'in_progress' ? 'In progress' : 'Applied'}</span>
+  }
   if (reason === 'This connection is read-only' && act) {
     return (
       <Tip content="This connection is read-only. Enable actions to apply fixes in one click.">
         <Button size={size} variant="outline" asChild onClick={(e) => e.stopPropagation()}>
-          <Link to="/settings?tab=connections"><ShieldAlert />Enable actions</Link>
+          <Link to="/settings?tab=connections">Enable actions</Link>
         </Button>
       </Tip>
     )
@@ -44,7 +46,7 @@ export function ApplyButton({ finding, action, onApply, size = 'sm', variant, la
       <span tabIndex={reason ? 0 : -1} className="inline-flex">
         <Button size={size} variant={variant} disabled={!!reason || !act}
           onClick={(e) => { e.stopPropagation(); if (act) onApply(act) }}>
-          {label ?? (act && act in ACTION_SHORT ? `Apply: ${ACTION_SHORT[act]}` : 'Apply')}
+          {label ?? (act && act in ACTION_SHORT ? ACTION_SHORT[act] : 'Apply')}
         </Button>
       </span>
     </Tip>

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Undo2 } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
 import { useActions, useUndo } from '@/api/hooks'
@@ -36,7 +36,7 @@ export default function Actions() {
 
   return (
     <div>
-      <PageHeader title="Action history" description="Every change made through the app, with before / after state. Undo where possible." />
+      <PageHeader title="Actions" />
       {isLoading ? <TableSkeleton /> : error ? <ErrorState error={error} onRetry={() => refetch()} /> : !data?.items.length ? (
         <EmptyState title="No actions yet" body="Apply a recommendation and it will show up here." />
       ) : (
@@ -63,7 +63,7 @@ export default function Actions() {
                     <td className="px-3 py-2 text-right">
                       {a.can_undo && <Button size="sm" variant="outline" disabled={undo.isPending} onClick={() => undo.mutate(a.id, {
                         onSuccess: (r) => { setWatching(r.action_id); refetch() }, onError: (e) => toast.error(e.message),
-                      })}><Undo2 />Undo</Button>}
+                      })}>Undo</Button>}
                     </td>
                   </tr>
                   {open === a.id && (
