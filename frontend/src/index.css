@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--primary);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --radius-lg: 6px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
+}
+
+:root {
+  /* Enterprise console palette (same as the original web/ design): neutral greys,
+     one blue for actions, navy top bar, status colours used only for meaning. */
+  --background: #f2f3f3;
+  --foreground: #16191f;
+  --card: #ffffff;
+  --primary: #0972d3;
+  --primary-foreground: #ffffff;
+  --muted: #f4f4f4;
+  --muted-foreground: #5f6b7a;
+  --accent: #f0f6fd;
+  --accent-foreground: #0972d3;
+  --border: #d5dbdb;
+  --input: #8c8c94;
+  --destructive: #d91515;
+  --success: #037f0c;
+  --warning: #8d6605;
+  --info: #0972d3;
+  --header: #0f1b2a;
+  --header-foreground: #ffffff;
+  --sidebar: #ffffff;
+  --chart-1: #0972d3;
+  --chart-2: #8c8c94;
+  --chart-3: #037f0c;
+  --chart-4: #8d6605;
+  --chart-5: #d91515;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0f1b2a;
+  --foreground: #e9ebed;
+  --card: #192534;
+  --primary: #539fe5;
+  --primary-foreground: #0f1b2a;
+  --muted: #232f3e;
+  --muted-foreground: #9ba7b6;
+  --accent: #1d3249;
+  --accent-foreground: #89bdee;
+  --border: #354150;
+  --input: #5f6b7a;
+  --destructive: #ff5d64;
+  --success: #29ad32;
+  --warning: #e0ca57;
+  --info: #539fe5;
+  --header: #0a121c;
+  --header-foreground: #ffffff;
+  --sidebar: #192534;
+  --chart-1: #539fe5;
+  --chart-2: #9ba7b6;
+  --chart-3: #29ad32;
+  --chart-4: #e0ca57;
+  --chart-5: #ff5d64;
+  color-scheme: dark;
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground antialiased; font-family: var(--font-sans); }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-primary; }
+}

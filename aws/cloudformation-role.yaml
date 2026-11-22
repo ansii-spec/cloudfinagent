@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  EC2 Optimizer access role. Lets the EC2 Optimizer platform assume this role (via sts:AssumeRole,
+  protected by your unique External ID) to read EC2 / CloudWatch data. Read-only by default;
+  set EnableActions=true to also allow one-click stop / resize / terminate. Delete this stack to revoke access.
+
+Parameters:
+  PlatformPrincipalArn:
+    Type: String
+    Description: ARN of the EC2 Optimizer platform principal that is allowed to assume this role (shown in the app).
+    AllowedPattern: '^arn:aws:iam::[0-9]{12}:(root|role/.+|user/.+)$'
+  ExternalId:
+    Type: String
+    Description: Your unique External ID from the app. Do not change it.
+    MinLength: 16
+    MaxLength: 128
+  EnableActions:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: 'true = also allow stop / start / resize / terminate from the app.'
+  RoleName:
+    Type: String
+    Default: EC2OptimizerAccessRole
+    Description: Must match the role name the platform is allowed to assume.
+
+Conditions:
+  ActionsEnabled: !Equals [!Ref EnableActions, 'true']
+
+Resources:
+  AccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Cross-account role for EC2 Optimizer (External-ID protected).
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref PlatformPrincipalArn
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+      Policies:
+        - PolicyName: ReadOnlyAnalysis
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceTypes
+                  - ec2:DescribeInstanceAttribute
+                  - ec2:DescribeInstanceStatus
+                  - ec2:DescribeRegions
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeTags
+                  - ec2:DescribeAddresses
+                  - ec2:DescribeImages
+                  - ec2:DescribeSnapshots
+                  - autoscaling:DescribeAutoScalingInstances
+                  - cloudwatch:GetMetricData
+                  - cloudwatch:ListMetrics
+                Resource: '*'
+
+  ActionsPolicy:
+    Type: AWS::IAM::Policy
+    Condition: ActionsEnabled
+    Properties:
+      PolicyName: RemediationActions
+      Roles:
+        - !Ref AccessRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ec2:StopInstances
+              - ec2:StartInstances
+              - ec2:TerminateInstances
+              - ec2:ModifyInstanceAttribute
+              - ec2:ModifyInstanceCreditSpecification
+              - ec2:CreateTags
+              - ec2:CreateSnapshot
+              - ec2:CreateImage
+            Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: Copy this Role ARN into the EC2 Optimizer app.
+    Value: !GetAtt AccessRole.Arn
+  ActionsEnabled:
+    Description: Whether one-click fixes are permitted.
+    Value: !Ref EnableActions

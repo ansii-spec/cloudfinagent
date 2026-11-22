@@ -1,0 +1,51 @@
+id,type,scenario,label,predicted,confidence,idle,over,under,reason
+i-syn0001,t3.micro,idle,IDLE,IDLE,81.7,81.7,0.0,0.8,"idle score 81.7%: CPU p95 1.24%, p99-max 2.85%, net p95 0.72 MB/h, EBS p95 12.8 MB/h [idle 81.7 | over 0.0 | under 0.8]"
+i-syn0002,t3.small,idle,IDLE,IDLE,88.2,88.2,0.0,0.6,"idle score 88.2%: CPU p95 0.85%, p99-max 1.98%, net p95 1.79 MB/h, EBS p95 10.6 MB/h [idle 88.2 | over 0.0 | under 0.6]"
+i-syn0003,t3.medium,idle,IDLE,IDLE,78.0,78.0,0.0,0.9,"idle score 78.0%: CPU p95 1.28%, p99-max 3.19%, net p95 1.05 MB/h, EBS p95 48.2 MB/h [idle 78.0 | over 0.0 | under 0.9]"
+i-syn0004,m5.large,idle,IDLE,IDLE,79.9,79.9,0.0,0.8,"idle score 79.9%: CPU p95 1.27%, p99-max 3.17%, net p95 0.24 MB/h, EBS p95 14.9 MB/h [idle 79.9 | over 0.0 | under 0.8]"
+i-syn0005,t3.micro,idle,IDLE,IDLE,74.8,74.8,0.0,1.1,"idle score 74.8%: CPU p95 1.73%, p99-max 4.40%, net p95 0.61 MB/h, EBS p95 12.5 MB/h [idle 74.8 | over 0.0 | under 1.1]"
+i-syn0006,t3.small,idle,IDLE,IDLE,88.5,88.5,0.0,0.6,"idle score 88.5%: CPU p95 0.80%, p99-max 1.92%, net p95 0.16 MB/h, EBS p95 13.3 MB/h [idle 88.5 | over 0.0 | under 0.6]"
+i-syn0007,t3.micro,idle + log noise,IDLE,IDLE,82.6,82.6,0.0,0.7,"idle score 82.6%: CPU p95 0.99%, p99-max 2.39%, net p95 0.83 MB/h, EBS p95 50.9 MB/h [idle 82.6 | over 0.0 | under 0.7]"
+i-syn0008,c5.large,idle + log noise,IDLE,IDLE,90.3,90.3,0.0,0.4,"idle score 90.3%: CPU p95 0.51%, p99-max 1.37%, net p95 1.69 MB/h, EBS p95 182.2 MB/h [idle 90.3 | over 0.0 | under 0.4]"
+i-syn0009,t3.micro,idle + log noise,IDLE,IDLE,91.4,91.4,0.0,0.4,"idle score 91.4%: CPU p95 0.65%, p99-max 1.66%, net p95 0.83 MB/h, EBS p95 11.4 MB/h [idle 91.4 | over 0.0 | under 0.4]"
+i-syn0010,c5.large,idle + log noise,IDLE,IDLE,85.0,85.0,0.0,0.7,"idle score 85.0%: CPU p95 1.05%, p99-max 2.54%, net p95 0.36 MB/h, EBS p95 1.6 MB/h [idle 85.0 | over 0.0 | under 0.7]"
+i-syn0011,t3.small,"idle CPU, sensitive tag",NEEDS_REVIEW,OVER_PROVISIONED,72.7,91.0,72.7,0.5,"p99 max CPU 5.8% -> needs 0.14 of 2 vCPU: t3.small -> t3.nano, saves $11.39/month (memory not checked) | blocked from IDLE: sensitive tag (replica) [idle 91.0 | over 72.7 | under 0.5]"
+i-syn0012,m5.large,"idle CPU, sensitive tag",NEEDS_REVIEW,NEEDS_REVIEW,74.0,74.0,0.0,1.1,"idle-level usage, but NOT declared idle: sensitive tag (postgres) [idle 74.0 | over 0.0 | under 1.1]"
+i-syn0013,r5.large,"idle CPU, sensitive tag",NEEDS_REVIEW,NEEDS_REVIEW,81.9,81.9,0.0,0.7,"idle-level usage, but NOT declared idle: sensitive tag (standby, db) [idle 81.9 | over 0.0 | under 0.7]"
+i-syn0014,r5.large,untagged replica,NEEDS_REVIEW,ACTIVE,73.6,52.8,0.0,0.8,no idle / over / under score reached its threshold (right-size: NO_SMALLER_SIZE) [idle 52.8 | over 0.0 | under 0.8]
+i-syn0015,m5.large,untagged replica,NEEDS_REVIEW,ACTIVE,78.5,42.9,0.0,0.7,no idle / over / under score reached its threshold (right-size: NO_SMALLER_SIZE) [idle 42.9 | over 0.0 | under 0.7]
+i-syn0016,m5.xlarge,"big box, low load",OVER_PROVISIONED,ACTIVE,72.7,10.0,54.6,14.2,no idle / over / under score reached its threshold [idle 10.0 | over 54.6 | under 14.2]
+i-syn0017,m5.2xlarge,"big box, low load",OVER_PROVISIONED,OVER_PROVISIONED,62.3,11.2,62.3,8.7,"p99 max CPU 20.3% -> needs 2.03 of 8 vCPU: m5.2xlarge -> m5.xlarge, saves $140.16/month (memory not checked) [idle 11.2 | over 62.3 | under 8.7]"
+i-syn0018,c5.xlarge,"big box, low load",OVER_PROVISIONED,ACTIVE,70.1,12.0,59.8,10.5,no idle / over / under score reached its threshold [idle 12.0 | over 59.8 | under 10.5]
+i-syn0019,c5.2xlarge,"big box, low load",OVER_PROVISIONED,ACTIVE,73.8,9.8,52.4,14.8,no idle / over / under score reached its threshold [idle 9.8 | over 52.4 | under 14.8]
+i-syn0020,r5.xlarge,"big box, low load",OVER_PROVISIONED,ACTIVE,71.8,8.2,56.4,12.4,no idle / over / under score reached its threshold [idle 8.2 | over 56.4 | under 12.4]
+i-syn0021,m5.xlarge,"big box, low load",OVER_PROVISIONED,OVER_PROVISIONED,67.1,14.4,67.1,5.5,"p99 max CPU 12.7% -> needs 0.63 of 4 vCPU: m5.xlarge -> m5.large, saves $70.08/month (memory not checked) [idle 14.4 | over 67.1 | under 5.5]"
+i-syn0022,m5.2xlarge,"big box, low load + mem",OVER_PROVISIONED,ACTIVE,91.3,17.3,0.0,4.4,no idle / over / under score reached its threshold (right-size: BLOCKED) [idle 17.3 | over 0.0 | under 4.4]
+i-syn0023,c5.4xlarge,"big box, low load + mem",OVER_PROVISIONED,ACTIVE,71.2,8.6,57.5,14.3,no idle / over / under score reached its threshold [idle 8.6 | over 57.5 | under 14.3]
+i-syn0024,t3.xlarge,"big T, low load",OVER_PROVISIONED,OVER_PROVISIONED,64.6,18.2,64.6,3.9,"p99 max CPU 9.1% -> needs 0.46 of 4 vCPU: t3.xlarge -> t3.medium, saves $91.1/month (memory not checked) [idle 18.2 | over 64.6 | under 3.9]"
+i-syn0025,t3.2xlarge,"big T, low load",OVER_PROVISIONED,OVER_PROVISIONED,61.4,16.1,61.4,4.0,"p99 max CPU 10.2% -> needs 1.02 of 8 vCPU: t3.2xlarge -> t3.large, saves $182.21/month (memory not checked) [idle 16.1 | over 61.4 | under 4.0]"
+i-syn0026,t3.xlarge,"big T, low load",OVER_PROVISIONED,OVER_PROVISIONED,65.8,19.4,65.8,3.5,"p99 max CPU 8.3% -> needs 0.42 of 4 vCPU: t3.xlarge -> t3.medium, saves $91.1/month (memory not checked) [idle 19.4 | over 65.8 | under 3.5]"
+i-syn0027,t3.2xlarge,"big T, low load",OVER_PROVISIONED,ACTIVE,73.0,13.2,53.9,6.1,no idle / over / under score reached its threshold [idle 13.2 | over 53.9 | under 6.1]
+i-syn0028,c5.large,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,3.4,0.0,100.0,CPU p99 100.0% vs 80.0% (100.0% of the time above it): consider the next size up [idle 3.4 | over 0.0 | under 100.0]
+i-syn0029,m5.large,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,97.7,3.3,0.0,97.7,CPU p99 98.2% vs 80.0% (100.0% of the time above it): consider the next size up [idle 3.3 | over 0.0 | under 97.7]
+i-syn0030,c5.xlarge,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,1.8,0.0,100.0,CPU p99 100.0% vs 80.0% (100.0% of the time above it): consider the next size up [idle 1.8 | over 0.0 | under 100.0]
+i-syn0031,t3.medium,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,3.6,0.0,100.0,CPU p99 100.0% vs 80.0% (100.0% of the time above it): consider the next size up [idle 3.6 | over 0.0 | under 100.0]
+i-syn0032,c5.large,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,92.8,1.8,0.0,92.8,CPU p99 94.7% vs 80.0% (99.3% of the time above it): consider the next size up [idle 1.8 | over 0.0 | under 92.8]
+i-syn0033,m5.large,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,2.1,0.0,100.0,CPU p99 100.0% vs 80.0% (100.0% of the time above it): consider the next size up [idle 2.1 | over 0.0 | under 100.0]
+i-syn0034,c5.xlarge,saturated CPU,UNDER_PROVISIONED,UNDER_PROVISIONED,92.0,2.2,0.0,92.0,CPU p99 94.1% vs 80.0% (99.3% of the time above it): consider the next size up [idle 2.2 | over 0.0 | under 92.0]
+i-syn0035,t3.small,T out of credits,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,10.4,0.0,100.0,"CPU credits below 5.0 for 56.2% of the time (min 0.0): throttled to baseline, consider a larger size or unlimited mode [idle 10.4 | over 0.0 | under 100.0]"
+i-syn0036,t3.medium,T out of credits,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,10.0,0.0,100.0,"CPU credits below 5.0 for 54.0% of the time (min 0.0): throttled to baseline, consider a larger size or unlimited mode [idle 10.0 | over 0.0 | under 100.0]"
+i-syn0037,t3.small,T out of credits,UNDER_PROVISIONED,UNDER_PROVISIONED,100.0,10.1,0.0,100.0,"CPU credits below 5.0 for 60.5% of the time (min 0.0): throttled to baseline, consider a larger size or unlimited mode [idle 10.1 | over 0.0 | under 100.0]"
+i-syn0038,m5.large,right-sized,ACTIVE,ACTIVE,75.1,5.1,0.0,49.8,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 5.1 | over 0.0 | under 49.8]
+i-syn0039,c5.large,right-sized,ACTIVE,ACTIVE,79.3,3.2,0.0,41.3,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 3.2 | over 0.0 | under 41.3]
+i-syn0040,c5.xlarge,right-sized,ACTIVE,ACTIVE,76.7,2.7,0.0,46.6,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 2.7 | over 0.0 | under 46.6]
+i-syn0041,m5.large,right-sized,ACTIVE,ACTIVE,79.0,3.0,0.0,41.9,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 3.0 | over 0.0 | under 41.9]
+i-syn0042,c5.large,right-sized,ACTIVE,ACTIVE,78.2,1.5,0.0,43.6,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 1.5 | over 0.0 | under 43.6]
+i-syn0043,t3.micro,network gateway,ACTIVE,ACTIVE,70.8,16.9,58.4,3.2,no idle / over / under score reached its threshold [idle 16.9 | over 58.4 | under 3.2]
+i-syn0044,t3.small,network gateway,ACTIVE,OVER_PROVISIONED,61.5,20.5,61.5,2.6,"p99 max CPU 7.1% -> needs 0.18 of 2 vCPU: t3.small -> t3.nano, saves $11.39/month (memory not checked) [idle 20.5 | over 61.5 | under 2.6]"
+i-syn0045,t3.micro,network gateway,ACTIVE,ACTIVE,71.7,16.9,56.7,3.5,no idle / over / under score reached its threshold [idle 16.9 | over 56.7 | under 3.5]
+i-syn0046,t3.medium,bursty,ACTIVE,ACTIVE,66.8,14.4,0.0,66.3,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 14.4 | over 0.0 | under 66.3]
+i-syn0047,t3.large,bursty,ACTIVE,ACTIVE,67.2,12.8,0.0,65.6,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 12.8 | over 0.0 | under 65.6]
+i-syn0048,t3.medium,bursty,ACTIVE,ACTIVE,68.0,13.6,0.0,64.1,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 13.6 | over 0.0 | under 64.1]
+i-syn0049,t3.small,disk-bound,ACTIVE,ACTIVE,86.0,28.0,0.0,13.9,no idle / over / under score reached its threshold (right-size: RIGHT_SIZED) [idle 28.0 | over 0.0 | under 13.9]
+i-syn0050,m5.large,disk-bound,ACTIVE,ACTIVE,86.2,27.5,0.0,14.3,no idle / over / under score reached its threshold (right-size: NO_SMALLER_SIZE) [idle 27.5 | over 0.0 | under 14.3]
