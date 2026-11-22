@@ -1,0 +1,10 @@
+.venv
+cfa
+__pycache__
+*.pyc
+*.db
+papers
+figures
+eval
+*.pdf
+.pytest_cache

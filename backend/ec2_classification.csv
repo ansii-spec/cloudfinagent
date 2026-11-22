@@ -1,0 +1,1 @@
+name,instance_id,type,category,reason,history_days,coverage,cpu_p95,cpu_max,net_p95_mb_per_hour,ebs_p95_mb_per_hour,net_mb_per_day,ebs_mb_per_day,net_hourly_cv,p99_cpu_max,needed_vcpu,recommended,monthly_saving_usd,confidence,warning

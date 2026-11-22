@@ -11,3 +11,14 @@ coverage/
 wireframes/
 diagrams/
 docs/
+
+# secrets / local artefacts
+keys.csv
+files.zip
+backend/.venv/
+backend/cfa/
+__pycache__/
+*.db
+.pytest_cache/
+files/
+backend/papers/

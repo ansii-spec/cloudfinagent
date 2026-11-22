@@ -1,61 +1,63 @@
-# CloudFinAgent
+# EC2 Optimizer (FYP)
 
-Final year project: an agent that finds wasted AWS spend, suggests changes, applies
-them with monitoring, and rolls them back when something breaks.
+Finds **idle**, **over-provisioned** and **under-provisioned** EC2 instances in a user's AWS account, explains why (the team's detection pipeline, unchanged), and fixes them with one click (stop / resize / unlimited credits) with preview, confirmation, audit log and undo. A savings dashboard tracks realized and potential savings (estimates).
 
-This repository currently holds the web frontend in `web/`. It runs on mock data;
-there is no backend yet.
+```
+ Browser (React SPA) ──cookie──► FastAPI (api) ──► PostgreSQL
+                                   │ enqueue
+                                   ▼
+                     Redis ◄── Celery worker / beat ──► sts:AssumeRole ──► USER'S AWS (EC2, CloudWatch)
+                                   │                └─► Pricing API (platform credentials)
+                                   └─ pipeline adapter ──► detector (pandas / numpy)
+```
 
-## Requirements
+No AWS access keys are ever accepted: users deploy a CloudFormation role (`aws/cloudformation-role.yaml`) that trusts our platform principal only with their unique **External ID**.
 
-- [Node.js](https://nodejs.org/) 22 or newer (includes npm)
-
-## Run the project
+## Quick start (demo, no AWS needed)
 
 ```bash
-cd web
-npm install
-npm run dev
+cp .env.example .env          # DEMO_MODE=true by default
+docker compose up --build
+docker compose exec api python -m app.scripts.seed_demo
+```
+Open http://localhost:5173 and log in as **demo@example.com / DemoPass123!**, or register and click **Use demo account** in the connect wizard.
+
+### Without Docker
+```bash
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+export DATABASE_URL=sqlite:///./local.db CELERY_EAGER=true DEMO_MODE=true
+.venv/bin/alembic upgrade head && .venv/bin/python -m app.scripts.seed_demo
+.venv/bin/uvicorn app.main:app --port 8000
+cd ../frontend && npm install && npm run dev
 ```
 
-Then open <http://localhost:5173> in your browser. The app starts on the login page;
-any valid-looking email and any password will log you in while the backend is missing.
+## Platform AWS account setup (real mode)
+1. In **your** (platform) account create an IAM role or user `ec2opt-backend` with:
+   ```json
+   {"Version":"2012-10-17","Statement":[
+     {"Effect":"Allow","Action":"sts:AssumeRole","Resource":"arn:aws:iam::*:role/EC2OptimizerAccessRole"},
+     {"Effect":"Allow","Action":"pricing:GetProducts","Resource":"*"}]}
+   ```
+2. Upload `aws/cloudformation-role.yaml` to a public S3 bucket; set `CFN_TEMPLATE_URL`.
+3. Set `DEMO_MODE=false`, `PLATFORM_AWS_ACCOUNT_ID`, `PLATFORM_PRINCIPAL_ARN` and (dev only) `PLATFORM_AWS_ACCESS_KEY_ID/SECRET`. In production use an instance/task role instead of keys.
 
-## Scripts
+All variables are documented in `.env.example`. For quick lab runs use `LOOKBACK_HOURS=35 MIN_HISTORY_HOURS=20 APPLY_DATA_QUALITY=false`.
 
-Run these inside `web/`:
-
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the development server with live reload |
-| `npm run build` | Build a production bundle into `web/dist/` |
-| `npm run preview` | Serve the production build locally |
-| `npm run lint` | Check the code with Oxlint |
-
-## Tech stack
-
-- React 19 with JavaScript, built with Vite
-- Tailwind CSS and shadcn/ui components
-- React Router for pages, Recharts for charts
-
-## Project structure
-
-```text
-web/
-  src/
-    pages/              One file per screen (Login, Register, Dashboard, ...)
-    components/layout/  App shell (top bar, sidebar) and the sign-in layout
-    components/common/  Shared page header, cards, tables, status badges, form fields
-    components/ui/      shadcn/ui components
-    mock/               Sample data used until the backend exists
-    router.js           Route definitions
-    index.css           Theme colours and base styles
+## Tests
+```bash
+cd backend && .venv/bin/python -m pytest       # pipeline regression vs original, moto AWS, API, savings
+cd frontend && npm test && npm run build       # Vitest + tsc + vite build
 ```
+Dependency audits: `pip-audit -r backend/requirements.txt`, `npm audit` (in `frontend/`).
 
-## Screens
+## Detector evaluation (FYP report)
+`python backend/scripts/evaluate.py labels.csv --connection-id <uuid> --scan` → `evaluation_report.md` (confusion matrix, precision / recall).
 
-| Route | Status |
-| --- | --- |
-| `/login`, `/register` | Done |
-| `/dashboard` | Done |
-| `/onboarding/*`, `/suggestions`, `/resources`, `/actions`, `/settings` | Placeholder |
+## Cost of running
+`GetMetricData` is billed per metric (~8–12 per instance per scan): daily scans of 50 instances cost cents per month. Pricing API calls are free and cached 7 days. A single small VM running Docker Compose is enough for the demo.
+
+## Known limitations
+Linux on-demand list prices only (no RI / Savings Plans / Spot / Windows), EC2 only, EBS not modelled, ASG/EKS/ECS-managed instances are never modified, 7-day cool-down after a change.
+
+## Screenshots
+_TODO_
