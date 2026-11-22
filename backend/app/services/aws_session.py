@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -36,7 +36,7 @@ def _no_aws_in_demo():
 
 
 def platform_session() -> boto3.Session:
-    """OUR identity: dev keys from env, otherwise the default chain (instance / task role)."""
+    """OUR identity: dev keys from env if provided, otherwise IAM instance / task role."""
     _no_aws_in_demo()
     s = get_settings()
     if s.platform_aws_access_key_id and s.platform_aws_secret_access_key:
@@ -110,7 +110,7 @@ def get_session(db: Session, conn: AwsConnection) -> boto3.Session:
     if creds is None:
         try:
             creds = assume_role(conn, conn.role_arn)
-        except ClientError as e:
+        except (ClientError, BotoCoreError) as e:
             msg = explain_aws_error(e, "AssumeRole")
             if e.response.get("Error", {}).get("Code") == "AccessDenied":
                 mark_broken(db, conn, msg)
@@ -135,7 +135,7 @@ def verify(db: Session, conn: AwsConnection, role_arn: str) -> dict:
 
     try:
         creds = assume_role(conn, role_arn)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         msg = explain_aws_error(e, "AssumeRole")
         check("AssumeRole", False, msg)
         conn.last_error = msg

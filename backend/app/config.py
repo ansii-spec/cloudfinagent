@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production-please-32-bytes-min"
     environment: str = "development"          # "production" => Secure cookies, no /docs
 
-    # platform AWS identity (pricing + AssumeRole)
-    platform_aws_account_id: str = "123456789012"
-    platform_principal_arn: str = "arn:aws:iam::123456789012:role/ec2opt-backend"
-    platform_aws_access_key_id: str | None = None      # dev only
-    platform_aws_secret_access_key: str | None = None  # dev only
+    # platform AWS identity (pricing + AssumeRole via IAM Role or dev keys)
+    platform_aws_account_id: str = "374073888140"
+    platform_principal_arn: str = "arn:aws:iam::374073888140:role/ec2opt-backend"
+    platform_aws_access_key_id: str | None = None
+    platform_aws_secret_access_key: str | None = None
     platform_aws_region: str = "us-east-1"
     cfn_template_url: str = "https://example-bucket.s3.amazonaws.com/cloudformation-role.yaml"
     role_name: str = "EC2OptimizerAccessRole"
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     min_history_hours: int = 168
     apply_data_quality: bool = True
 
-    demo_mode: bool = True
+    demo_mode: bool = False
     frontend_origin: str = "http://localhost:5173"
 
     # behaviour knobs

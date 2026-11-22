@@ -47,7 +47,14 @@ export async function api<T>(method: string, path: string, opts: { body?: unknow
   })
   if (res.status === 204) return undefined as T
   const text = await res.text()
-  const data: unknown = text ? JSON.parse(text) : undefined
+  let data: unknown
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = { error: { code: 'HTTP_ERROR', message: text } }
+    }
+  }
   if (!res.ok) {
     const err = (data as ApiErrorBody | undefined)?.error
     if (res.status === 401 && !path.startsWith('/auth/')) onUnauthorized?.()

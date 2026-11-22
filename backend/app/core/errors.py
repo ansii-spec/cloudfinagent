@@ -38,3 +38,7 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _validation_error(_: Request, exc: RequestValidationError):
         details = [{"loc": list(e.get("loc", [])), "msg": e.get("msg", "")} for e in exc.errors()]
         return JSONResponse(_body("VALIDATION_ERROR", "Request validation failed", details), status_code=422)
+
+    @app.exception_handler(Exception)
+    async def _unhandled_error(_: Request, exc: Exception):
+        return JSONResponse(_body("INTERNAL_ERROR", str(exc)), status_code=500)

@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, Copy, ExternalLink, Info, Loader2, XCircle } from 'lucide-react'
+import { Check, CheckCircle2, Copy, Download, ExternalLink, Info, Loader2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -165,7 +165,20 @@ function StepRole({ conn, wizard }: { conn: Connection; wizard: WizardPayload })
               <li>When it finishes, copy the <strong>RoleArn</strong> from the stack's <em>Outputs</em> tab and paste it below.</li>
             </ol>
             {upgrading && <p className="text-muted-foreground">Already have the stack? Use <em>Update stack → Replace current template</em> and set EnableActions to <code>true</code>.</p>}
-            <Button asChild><a href={wizard.cloudformation_quick_create_url} target="_blank" rel="noreferrer"><ExternalLink />Launch CloudFormation stack</a></Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild><a href={wizard.cloudformation_quick_create_url} target="_blank" rel="noreferrer"><ExternalLink />Launch CloudFormation stack</a></Button>
+              <Button variant="outline" asChild><a href="/cloudformation-role.yaml" download="cloudformation-role.yaml"><Download />Download template YAML</a></Button>
+            </div>
+            {wizard.cloudformation_template_url.includes('YOUR-BUCKET') && (
+              <div className="rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-1">
+                <p className="font-semibold">Notice regarding "Launch CloudFormation stack":</p>
+                <p>The quick-create URL references the default placeholder bucket (<code>YOUR-BUCKET</code>). If you see <em>"TemplateURL must be a supported URL (Access Denied)"</em> in AWS:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Click <strong>Download template YAML</strong> above, then in AWS CloudFormation choose <strong>Create Stack → Upload a template file</strong>.</li>
+                  <li>Or switch to the <strong>Manual</strong> tab above to create the role directly in the IAM Console with no CloudFormation needed.</li>
+                </ul>
+              </div>
+            )}
           </CardContent></Card>
         </TabsContent>
         <TabsContent value="manual">
