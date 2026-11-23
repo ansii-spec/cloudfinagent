@@ -16,7 +16,7 @@ User creates IAM role (in their account)
 
 | Identity | Lives in | Purpose |
 |---|---|---|
-| **Platform principal** (`PLATFORM_PRINCIPAL_ARN`) | OUR AWS account | The only principal allowed to assume customer roles. Needs `sts:AssumeRole` on `arn:aws:iam::*:role/EC2OptimizerAccessRole` and `pricing:GetProducts`. Dev: an IAM user whose keys sit in `.env`. Production: instance/task role. |
+| **Platform principal** (`PLATFORM_PRINCIPAL_ARN`) | OUR AWS account | The only principal allowed to assume customer roles. Needs `sts:AssumeRole` on `arn:aws:iam::*:role/EC2OptimizerAccessRole*` and `pricing:GetProducts`. Dev: an IAM user whose keys sit in `.env`. Production: instance/task role. |
 | **Customer role** (`EC2OptimizerAccessRole`) | USER'S AWS account | Trusts the platform principal, only when the correct External ID is presented. Carries the EC2/CloudWatch permissions. |
 
 ### Platform principal policy (document in README)
@@ -24,7 +24,7 @@ User creates IAM role (in their account)
 {
   "Version": "2012-10-17",
   "Statement": [
-    {"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": "arn:aws:iam::*:role/EC2OptimizerAccessRole"},
+    {"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": "arn:aws:iam::*:role/EC2OptimizerAccessRole*"},
     {"Effect": "Allow", "Action": "pricing:GetProducts", "Resource": "*"}
   ]
 }

@@ -3,7 +3,7 @@ import { AlertTriangle, CircleUser, Cloud, History, LayoutDashboard, ListChecks,
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { toast } from 'sonner'
-import { useLogout, useMe, usePublicConfig, useScans, useStartScan } from '@/api/hooks'
+import { useLogout, useMe, useScans, useStartScan } from '@/api/hooks'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/input'
 import { Tip } from '@/components/ui/tooltip'
@@ -84,15 +84,11 @@ export function RunScanButton({ size = 'sm' }: { size?: 'sm' | 'default' }) {
 
 export default function AppShell() {
   const { data: me } = useMe()
-  const { data: config } = usePublicConfig()
   const { connections, current, setConnectionId } = useConnectionCtx()
   const logout = useLogout()
   const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [demoDismissed, setDemoDismissed] = useState(() => {
-    try { return sessionStorage.getItem('ec2opt.demoBanner') === '1' } catch { return false }
-  })
   useEffect(() => applyTheme(theme), [theme])
   const usable = connections.filter((c) => c.status !== 'pending')
 
@@ -165,15 +161,6 @@ export default function AppShell() {
 
         <div className="flex min-w-0 flex-1 flex-col">
         <main className="w-full min-w-0 flex-1 p-4 md:p-8">
-          {config?.demo_mode && !demoDismissed && (
-            <div className="mb-6 flex items-center justify-between gap-3 border-b pb-2 text-xs text-muted-foreground">
-              <span>Demo mode: sample data, no AWS account is used.</span>
-              <Button variant="ghost" size="icon" className="size-6" aria-label="Dismiss demo notice" onClick={() => {
-                setDemoDismissed(true)
-                try { sessionStorage.setItem('ec2opt.demoBanner', '1') } catch { /* ignore */ }
-              }}><X /></Button>
-            </div>
-          )}
           {current?.status === 'broken' && (
             <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">
               <AlertTriangle className="size-4 text-destructive" aria-hidden="true" />

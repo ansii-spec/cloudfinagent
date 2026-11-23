@@ -1,9 +1,9 @@
 import type { ActionPreview, Connection, Finding } from '@/lib/types'
 
 export const connection: Connection = {
-  id: 'c1', label: 'Demo', status: 'connected', aws_account_id: '000000000000', role_arn: 'arn:aws:iam::000000000000:role/X',
+  id: 'c1', label: 'Prod', status: 'connected', aws_account_id: '000000000000', role_arn: 'arn:aws:iam::000000000000:role/X',
   enable_actions: true, actions_verified: true, last_error: null, last_verified_at: null, regions: [], scan_schedule: 'daily',
-  is_demo: true, created_at: null,
+  created_at: null,
 }
 
 export function finding(over: Partial<Finding> = {}): Finding {

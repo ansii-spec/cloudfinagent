@@ -39,21 +39,23 @@ Once running:
 ### Without Docker
 ```bash
 cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-export DATABASE_URL=sqlite:///./local.db CELERY_EAGER=true DEMO_MODE=true
-.venv/bin/alembic upgrade head && .venv/bin/python -m app.scripts.seed_demo
+export DATABASE_URL=sqlite:///./local.db CELERY_EAGER=true
+.venv/bin/alembic upgrade head
 .venv/bin/uvicorn app.main:app --port 8000
 cd ../frontend && npm install && npm run dev
 ```
 
-## Platform AWS account setup (real mode)
+## Platform AWS account setup (required)
+The app has no demo mode: every user connects a real AWS account, and all findings, prices and actions come from AWS.
+
 1. In **your** (platform) account create an IAM role or user `ec2opt-backend` with:
    ```json
    {"Version":"2012-10-17","Statement":[
-     {"Effect":"Allow","Action":"sts:AssumeRole","Resource":"arn:aws:iam::*:role/EC2OptimizerAccessRole"},
+     {"Effect":"Allow","Action":"sts:AssumeRole","Resource":"arn:aws:iam::*:role/EC2OptimizerAccessRole*"},
      {"Effect":"Allow","Action":"pricing:GetProducts","Resource":"*"}]}
    ```
 2. Upload `aws/cloudformation-role.yaml` to a public S3 bucket; set `CFN_TEMPLATE_URL`.
-3. Set `DEMO_MODE=false`, `PLATFORM_AWS_ACCOUNT_ID`, `PLATFORM_PRINCIPAL_ARN` and (dev only) `PLATFORM_AWS_ACCESS_KEY_ID/SECRET`. In production use an instance/task role instead of keys.
+3. Set `PLATFORM_AWS_ACCOUNT_ID`, `PLATFORM_PRINCIPAL_ARN` and (dev only) `PLATFORM_AWS_ACCESS_KEY_ID/SECRET`. In production use an instance/task role instead of keys.
 
 All variables are documented in `.env.example`. For quick lab runs use `LOOKBACK_HOURS=35 MIN_HISTORY_HOURS=20 APPLY_DATA_QUALITY=false`.
 
@@ -68,7 +70,7 @@ Dependency audits: `pip-audit -r backend/requirements.txt`, `npm audit` (in `fro
 `python backend/scripts/evaluate.py labels.csv --connection-id <uuid> --scan` → `evaluation_report.md` (confusion matrix, precision / recall).
 
 ## Cost of running
-`GetMetricData` is billed per metric (~8–12 per instance per scan): daily scans of 50 instances cost cents per month. Pricing API calls are free and cached 7 days. A single small VM running Docker Compose is enough for the demo.
+`GetMetricData` is billed per metric (~8–12 per instance per scan): daily scans of 50 instances cost cents per month. Pricing API calls are free and cached 7 days. A single small VM running Docker Compose is enough.
 
 ## Known limitations
 Linux on-demand list prices only (no RI / Savings Plans / Spot / Windows), EC2 only, EBS not modelled, ASG/EKS/ECS-managed instances are never modified, 7-day cool-down after a change.

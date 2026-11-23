@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
-  ActionCode, ActionPreview, Connection, DashboardSummary, FindingDetail, FindingsResponse, Page,
+  ActionCode, ActionPreview, AwsCleanup, Connection, DashboardSummary, FindingDetail, FindingsResponse, Page,
   PublicConfig, RegionCount, RemediationAction, Scan, User, VerifyResult, WizardPayload,
 } from '@/lib/types'
 import { ApiError, del, get, patch, post } from './client'
@@ -82,14 +82,6 @@ export function useCreateConnection() {
   })
 }
 
-export function useCreateDemoConnection() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: () => post<Connection & { scan_id: string | null }>('/connections/demo'),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['connections'] }),
-  })
-}
-
 export function useVerifyConnection(id: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -116,7 +108,7 @@ export function useUpdateConnection(id: string) {
 export function useDeleteConnection() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => del<void>(`/connections/${id}`),
+    mutationFn: (id: string) => del<{ aws_cleanup: AwsCleanup | null }>(`/connections/${id}`),
     onSuccess: () => qc.invalidateQueries(),
   })
 }

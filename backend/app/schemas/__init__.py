@@ -103,7 +103,7 @@ def connection_out(c: AwsConnection) -> dict:
     return {"id": str(c.id), "label": c.label, "status": c.status, "aws_account_id": c.aws_account_id,
             "role_arn": c.role_arn, "enable_actions": c.enable_actions, "actions_verified": c.actions_verified,
             "last_error": c.last_error, "last_verified_at": iso(c.last_verified_at), "regions": c.regions or [],
-            "scan_schedule": c.scan_schedule, "is_demo": c.is_demo, "created_at": iso(c.created_at)}
+            "scan_schedule": c.scan_schedule, "created_at": iso(c.created_at)}
 
 
 def scan_out(s: Scan) -> dict:

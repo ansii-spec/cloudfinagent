@@ -1,13 +1,8 @@
-"""EC2 operations used by remediation. AwsOps = real boto3 (customer role); DemoOps = fake in-DB state."""
-import time
+"""EC2 operations used by remediation. AwsOps = real boto3 (customer role)."""
 
 from botocore.exceptions import ClientError
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import DemoInstance
-from app.pipeline import catalog
 from app.services.aws_session import BOTO_CFG
 
 
@@ -156,94 +151,3 @@ class AwsOps:
     def tag(self, iid, tags: dict):
         self._wrap(lambda: self.ec2.create_tags(Resources=[iid],
                                                 Tags=[{"Key": k, "Value": v} for k, v in tags.items()]))
-
-
-class DemoOps:
-    """DEMO_MODE executor: never calls AWS; sleeps per step and mutates demo_instances."""
-
-    def __init__(self, db: Session, connection_id, region: str):
-        self.db, self.cid, self.region = db, connection_id, region
-        self.delay = get_settings().demo_step_delay_s
-
-    def _row(self, iid) -> DemoInstance | None:
-        return self.db.scalar(select(DemoInstance).where(DemoInstance.connection_id == self.cid,
-                                                         DemoInstance.instance_id == iid))
-
-    def _sleep(self):
-        if self.delay:
-            time.sleep(self.delay)
-
-    def describe(self, iid):
-        r = self._row(iid)
-        if r is None or r.state == "terminated":
-            return None
-        return {"state": r.state, "instance_type": r.instance_type, "lifecycle": "normal",
-                "root_device_type": "ebs", "tags": r.tags or {}, "public_ip": r.public_ip,
-                "hibernation": False, "volume_ids": [f"vol-{iid[2:]}"], "architecture": "x86_64",
-                "cpu_credits": r.cpu_credits}
-
-    def protection(self, iid, attribute):
-        return False
-
-    def asg_name(self, iid, tags):
-        return tags.get("aws:autoscaling:groupName")
-
-    def has_eip(self, iid):
-        r = self._row(iid)
-        return bool(r and r.has_eip)
-
-    def type_info(self, t):
-        return {"name": t, "arch": ["x86_64"]} if catalog.known(t) else None
-
-    def dry_run(self, action, iid):
-        return None
-
-    def _set(self, iid, **kw):
-        r = self._row(iid)
-        for k, v in kw.items():
-            setattr(r, k, v)
-        self.db.commit()
-
-    def stop(self, iid):
-        self._sleep()
-        r = self._row(iid)
-        self._set(iid, state="stopped", public_ip=r.public_ip if r.has_eip else None)
-
-    def start(self, iid, wait_status_ok=False):
-        self._sleep()
-        r = self._row(iid)
-        if r.fail_resize and r.instance_type != (r.tags or {}).get("_original_type", r.instance_type):
-            raise OpError("InsufficientInstanceCapacity: AWS has no capacity for that instance type right now",
-                          "InsufficientInstanceCapacity")
-        # without an Elastic IP a restarted instance gets a new public IPv4
-        ip = r.public_ip if r.has_eip else f"3.{int(time.time() * 7) % 250}.{int(time.time()) % 250}.{len(iid)}"
-        self._set(iid, state="running", public_ip=ip)
-
-    def modify_type(self, iid, target):
-        self._sleep()
-        r = self._row(iid)
-        if r.fail_resize:
-            tags = dict(r.tags or {})
-            tags.setdefault("_original_type", r.instance_type)
-            r.tags = tags
-        self._set(iid, instance_type=target)
-
-    def set_credits(self, iid, mode):
-        self._sleep()
-        self._set(iid, cpu_credits=mode)
-
-    def terminate(self, iid):
-        self._sleep()
-        self._set(iid, state="terminated")
-
-    def create_image(self, iid, name):
-        self._sleep()
-        return f"ami-demo{abs(hash(name)) % 10**12:012d}"
-
-    def snapshot(self, volume_id, description):
-        return f"snap-demo{abs(hash(description + volume_id)) % 10**12:012d}"
-
-    def tag(self, iid, tags):
-        r = self._row(iid)
-        r.tags = {**(r.tags or {}), **tags}
-        self.db.commit()

@@ -6,11 +6,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from app.pipeline import catalog, recommend
+from app.pipeline import recommend
+from tests.support import catalog
 from app.pipeline import detector as d
 from app.pipeline.adapter import PipelineConfig, analyze_instance
 from app.pipeline.serialization import to_jsonable
-from app.pipeline.synthetic import FakeCloudWatch, Profile, make_meta
+from tests.support.synthetic import FakeCloudWatch, Profile, make_meta
 
 ORIG_PATH = Path(__file__).resolve().parents[1] / "pipeline_source" / "detector_original.py"
 spec = importlib.util.spec_from_file_location("detector_original", ORIG_PATH)

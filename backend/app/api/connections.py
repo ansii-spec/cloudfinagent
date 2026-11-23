@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.core.deps import client_ip, current_user, owned_connection
 from app.core.errors import AppError
 from app.db import get_db
 from app.models import AwsConnection, User
 from app.schemas import ConnectionCreateIn, ConnectionPatchIn, VerifyIn, connection_out
-from app.services import connection_service, demo_service, scan_service
+from app.services import connection_service
 
 router = APIRouter(prefix="/connections", tags=["connections"])
 
@@ -24,19 +23,6 @@ def list_connections(user: User = Depends(current_user), db: Session = Depends(g
 def create_connection(body: ConnectionCreateIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     conn = connection_service.create(db, user, body.label, body.enable_actions)
     return connection_service.wizard_payload(conn)
-
-
-@router.post("/demo", status_code=201)
-def create_demo(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    if not get_settings().demo_mode:
-        raise AppError(404, "NOT_FOUND", "Demo accounts are only available in DEMO_MODE")
-    conn = demo_service.create_demo_connection(db, user)
-    scan = None
-    try:
-        scan = scan_service.start_scan(db, conn, None, trigger="manual")
-    except AppError:
-        db.rollback()
-    return {**connection_out(conn), "scan_id": str(scan.id) if scan else None}
 
 
 @router.get("/{connection_id}")
@@ -71,8 +57,7 @@ def regions(connection_id: str, user: User = Depends(current_user), db: Session 
     return connection_service.list_regions(db, conn)
 
 
-@router.delete("/{connection_id}", status_code=204)
+@router.delete("/{connection_id}")
 def delete(connection_id: str, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
     conn = owned_connection(db, user, connection_id)
-    connection_service.delete(db, conn, client_ip(request))
-    return Response(status_code=204)
+    return {"aws_cleanup": connection_service.delete(db, conn, client_ip(request))}

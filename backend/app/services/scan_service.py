@@ -134,30 +134,25 @@ def run_scan(scan_id) -> None:
         scan.status, scan.started_at = "running", _now()
         db.commit()
         progress = _Progress(scan.id)
-        if conn.is_demo:
-            from app.services import demo_service
-            results = demo_service.scan_results(db, conn, progress)
-            failed_regions = []
-        else:
-            s = get_settings()
-            cfg = PipelineConfig(lookback_hours=s.lookback_hours, min_history_hours=s.min_history_hours,
-                                 max_workers=s.scan_max_workers)
-            platform = aws_session.platform_session()
-            session = aws_session.get_session(db, conn)
-            regions = _regions_to_scan(db, conn, scan, session)
-            scan.regions = regions
-            db.commit()
-            results, failed_regions = [], []
-            for region in regions:
-                try:
-                    session = aws_session.get_session(db, conn)   # refresh between regions (long scans)
-                    results += analyze_region(
-                        session, platform, region, cfg, on_progress=progress.step,
-                        on_discovered=progress.discovered,
-                        price_fn_factory=lambda pricing, r=region: pricing_service.price_fn_for(r, pricing))
-                except Exception as e:  # noqa: BLE001 - one region must not kill the scan
-                    log.error("region %s failed: %s", region, explain_aws_error(e))
-                    failed_regions.append({"region": region, "error": explain_aws_error(e)})
+        s = get_settings()
+        cfg = PipelineConfig(lookback_hours=s.lookback_hours, min_history_hours=s.min_history_hours,
+                             max_workers=s.scan_max_workers)
+        platform = aws_session.platform_session()
+        session = aws_session.get_session(db, conn)
+        regions = _regions_to_scan(db, conn, scan, session)
+        scan.regions = regions
+        db.commit()
+        results, failed_regions = [], []
+        for region in regions:
+            try:
+                session = aws_session.get_session(db, conn)   # refresh between regions (long scans)
+                results += analyze_region(
+                    session, platform, region, cfg, on_progress=progress.step,
+                    on_discovered=progress.discovered,
+                    price_fn_factory=lambda pricing, r=region: pricing_service.price_fn_for(r, pricing))
+            except Exception as e:  # noqa: BLE001 - one region must not kill the scan
+                log.error("region %s failed: %s", region, explain_aws_error(e))
+                failed_regions.append({"region": region, "error": explain_aws_error(e)})
         db.refresh(scan)
         summary = save_findings(db, scan, conn, results)
         if failed_regions:

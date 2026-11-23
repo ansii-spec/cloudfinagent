@@ -21,7 +21,7 @@ End-to-end flow:
 3. Default AWS access = **read-only**. Write permissions (stop/resize) are a separate, optional, explicitly-enabled permission set.
 4. Every change to a user's AWS account must be: previewed → confirmed → executed asynchronously → audited → undoable where possible.
 5. All savings numbers shown to the user are labelled **estimates** (Linux on-demand list price).
-6. Must run locally with one command: `docker compose up`, and must have a **DEMO_MODE** that works with zero AWS access (seeded fake findings) so the frontend can be developed and demoed offline.
+6. Must run locally with one command: `docker compose up`. There is **no demo mode** (removed 2026-11-23 at the owner's request): users connect a real AWS account and all data, prices and actions come from AWS. Do not re-add fake data paths.
 
 ## 3. Tech stack (use exactly this)
 | Layer | Choice |
@@ -54,15 +54,14 @@ End-to-end flow:
 - **Phase 0** – repo scaffold, docker compose, health endpoints, DB migrations.
 - **Phase 1** – auth (register / login / logout / me) + frontend shell.
 - **Phase 2** – AWS connection flow (pending → connected), verified via real `AssumeRole`, moto-tested.
-- **Phase 3** – pipeline adapter + scan job + findings API + DEMO_MODE fixtures.
+- **Phase 3** – pipeline adapter + scan job + findings API.
 - **Phase 4** – Findings UI (list, filters, detail drawer with evidence + charts).
 - **Phase 5** – Remediation engine (dry-run, apply, undo, audit) + confirm modal + action history.
 - **Phase 6** – Savings ledger, daily accrual job, dashboard.
-- **Phase 7** – scheduled scans, settings, polish, README, tests, seed/demo data.
+- **Phase 7** – scheduled scans, settings, polish, README, tests.
 
 ## 6. Definition of done
 - `docker compose up` brings everything up; `http://localhost:5173` works.
-- With `DEMO_MODE=true` the full UI (all pages, apply, undo, savings) works without AWS.
 - With real AWS, a user can connect, scan, see findings, apply an action and see savings.
 - Backend tests pass (`pytest`), frontend builds (`npm run build`), no TypeScript errors.
 - `README.md` documents setup, env vars, and the AWS platform-account setup steps.

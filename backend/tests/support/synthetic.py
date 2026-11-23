@@ -1,6 +1,6 @@
 """Synthetic CloudWatch data: a fake `cw` client that answers get_metric_data from a workload profile.
 
-Used to generate DEMO_MODE fixtures by running the REAL detector, and by the pipeline tests
+Test-only: feeds the REAL detector in the pipeline and moto tests
 (moto does not return realistic CloudWatch datapoints)."""
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone

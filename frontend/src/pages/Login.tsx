@@ -1,9 +1,9 @@
 import { Loader2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useLogin, usePublicConfig } from '@/api/hooks'
+import { useLogin } from '@/api/hooks'
 import { Button } from '@/components/ui/button'
-import { FieldError, Input, Label } from '@/components/ui/input'
+import { FieldError, Input, Label, PasswordInput } from '@/components/ui/input'
 import { AuthLayout } from './AuthLayout'
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -12,7 +12,6 @@ export default function Login() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const login = useLogin()
-  const { data: cfg } = usePublicConfig()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [touched, setTouched] = useState(false)
@@ -34,13 +33,12 @@ export default function Login() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <FieldError>{login.error?.message}</FieldError>
         <Button type="submit" size="lg" className="w-full" disabled={login.isPending}>{login.isPending && <Loader2 className="animate-spin" />}Log in</Button>
       </form>
       <p className="mt-6 text-center text-sm text-muted-foreground">No account? <Link to="/register" className="text-primary hover:underline">Create one</Link></p>
-      {cfg?.demo_mode && <p className="mt-2 text-xs text-muted-foreground">Demo: demo@example.com / DemoPass123! (after running the seed command)</p>}
     </AuthLayout>
   )
 }

@@ -1,4 +1,4 @@
-import { Loader2, Plus, ShieldCheck, Trash2 } from 'lucide-react'
+import { ExternalLink, Loader2, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -15,7 +15,7 @@ import { FieldError, Input, Label, Select } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useConnectionCtx } from '@/context/ConnectionProvider'
 import { dateTime } from '@/lib/format'
-import type { Connection } from '@/lib/types'
+import type { AwsCleanup, Connection } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export default function Settings() {
@@ -45,15 +45,34 @@ const STATUS_CHIP: Record<string, string> = {
 
 function ConnectionsTab() {
   const { connections } = useConnectionCtx()
+  const [cleanup, setCleanup] = useState<AwsCleanup | null>(null)
   return (
     <div className="space-y-4">
-      {connections.map((c) => <ConnectionCard key={c.id} c={c} />)}
+      {connections.map((c) => <ConnectionCard key={c.id} c={c} onDisconnected={setCleanup} />)}
+      <Dialog open={!!cleanup} onOpenChange={(o) => !o && setCleanup(null)}>
+        <DialogContent title="One last step: remove access in AWS"
+          description="The connection and all its data were deleted from EC2 Optimizer. The app only has read access, so it cannot delete the IAM role in your AWS account - delete its CloudFormation stack to finish.">
+          {cleanup && (
+            <div className="space-y-3 text-sm">
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>Open CloudFormation (us-east-1) and select the stack <code className="rounded bg-muted px-1">{cleanup.stack_name}</code>.</li>
+                <li>Click <strong>Delete</strong>. This removes the role <code className="rounded bg-muted px-1">{cleanup.role_name}</code> and all its permissions.</li>
+              </ol>
+              <p className="text-xs text-muted-foreground">New connections use their own role name, so reconnecting works even if you skip this.</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setCleanup(null)}>Done</Button>
+                <Button asChild><a href={cleanup.console_url} target="_blank" rel="noreferrer"><ExternalLink />Open CloudFormation</a></Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <Button asChild variant="outline"><Link to="/connect"><Plus />Add AWS account</Link></Button>
     </div>
   )
 }
 
-function ConnectionCard({ c }: { c: Connection }) {
+function ConnectionCard({ c, onDisconnected }: { c: Connection; onDisconnected: (x: AwsCleanup | null) => void }) {
   const update = useUpdateConnection(c.id)
   const remove = useDeleteConnection()
   const navigate = useNavigate()
@@ -67,7 +86,7 @@ function ConnectionCard({ c }: { c: Connection }) {
     <Card>
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
         <div>
-          <CardTitle className="flex items-center gap-2">{c.label}<Badge className={STATUS_CHIP[c.status]}>{c.status}</Badge>{c.is_demo && <Badge className="bg-info/10 text-info">demo</Badge>}</CardTitle>
+          <CardTitle className="flex items-center gap-2">{c.label}<Badge className={STATUS_CHIP[c.status]}>{c.status}</Badge></CardTitle>
           <CardDescription className="mt-1 font-mono">{c.aws_account_id ?? 'not verified'} · {c.role_arn ?? '—'}</CardDescription>
           {c.last_error && <p className="mt-1 text-xs text-destructive">{c.last_error}</p>}
           <p className="mt-1 text-xs text-muted-foreground">Last verified {dateTime(c.last_verified_at)}</p>
@@ -88,7 +107,7 @@ function ConnectionCard({ c }: { c: Connection }) {
             <Button size="sm" variant="outline" onClick={() => save({ enable_actions: false }, 'Switched to read-only')}>Switch to read-only</Button>
           ) : (
             <Button size="sm" onClick={() => update.mutate({ enable_actions: true }, {
-              onSuccess: () => { toast.success('Update your stack, then re-verify'); if (!c.is_demo) navigate(`/connect?id=${c.id}`) },
+              onSuccess: () => { toast.success('Update your stack, then re-verify'); navigate(`/connect?id=${c.id}`) },
             })}>Enable actions</Button>
           )}
           <p className="text-xs text-muted-foreground">You can revoke access any time by deleting the CloudFormation stack.</p>
@@ -114,11 +133,11 @@ function ConnectionCard({ c }: { c: Connection }) {
         )}
       </CardContent>
       <Dialog open={confirm} onOpenChange={setConfirm}>
-        <DialogContent title="Disconnect this AWS account?" description="This deletes the connection and all its scans, findings, action history and savings data. Your AWS resources are not touched.">
+        <DialogContent title="Disconnect this AWS account?" description="This deletes the connection and all its scans, findings, action history and savings data. Your EC2 instances are not touched; afterwards you'll get a link to delete the access role from your AWS account.">
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setConfirm(false)}>Cancel</Button>
             <Button variant="destructive" disabled={remove.isPending} onClick={() => remove.mutate(c.id, {
-              onSuccess: () => { toast.success('Disconnected'); setConfirm(false) }, onError: (e) => toast.error(e.message),
+              onSuccess: (r) => { toast.success('Disconnected'); setConfirm(false); onDisconnected(r?.aws_cleanup ?? null) }, onError: (e) => toast.error(e.message),
             })}>Disconnect</Button>
           </div>
         </DialogContent>

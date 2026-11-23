@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useRegister } from '@/api/hooks'
 import { Button } from '@/components/ui/button'
-import { FieldError, Input, Label } from '@/components/ui/input'
+import { FieldError, Input, Label, PasswordInput } from '@/components/ui/input'
 import { AuthLayout } from './AuthLayout'
 import { EMAIL_RE } from './Login'
 
@@ -29,9 +29,13 @@ export default function Register() {
         {(['name', 'email', 'password'] as const).map((k) => (
           <div key={k} className="space-y-1.5">
             <Label htmlFor={k}>{k === 'name' ? 'Name' : k === 'email' ? 'Email' : 'Password'}</Label>
-            <Input id={k} type={k === 'password' ? 'password' : k === 'email' ? 'email' : 'text'}
-              autoComplete={k === 'password' ? 'new-password' : k} value={f[k]}
-              onChange={(e) => setF({ ...f, [k]: e.target.value })} aria-invalid={!!errs[k]} />
+            {k === 'password' ? (
+              <PasswordInput id={k} autoComplete="new-password" value={f[k]}
+                onChange={(e) => setF({ ...f, [k]: e.target.value })} aria-invalid={!!errs[k]} />
+            ) : (
+              <Input id={k} type={k === 'email' ? 'email' : 'text'} autoComplete={k} value={f[k]}
+                onChange={(e) => setF({ ...f, [k]: e.target.value })} aria-invalid={!!errs[k]} />
+            )}
             <FieldError>{errs[k]}</FieldError>
           </div>
         ))}

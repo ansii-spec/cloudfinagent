@@ -7,10 +7,10 @@ from moto import mock_aws
 from app.config import get_settings
 from app.db import SessionLocal
 from app.models import AwsConnection, Finding, RemediationAction, Scan, User
-from app.pipeline import catalog
+from tests.support import catalog
 from app.pipeline import detector as d
 from app.pipeline.adapter import PipelineConfig, analyze_region
-from app.pipeline.synthetic import FakeCloudWatch, Profile
+from tests.support.synthetic import FakeCloudWatch, Profile
 from app.services import aws_session, remediation_service
 
 ARN = "arn:aws:iam::123456789012:role/EC2OptimizerAccessRole"
@@ -19,7 +19,6 @@ ARN = "arn:aws:iam::123456789012:role/EC2OptimizerAccessRole"
 @pytest.fixture
 def real_mode(monkeypatch):
     s = get_settings()
-    monkeypatch.setattr(s, "demo_mode", False)
     with mock_aws():
         yield s
 

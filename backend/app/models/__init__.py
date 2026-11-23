@@ -45,7 +45,6 @@ class AwsConnection(TimestampMixin, Base):
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     regions: Mapped[list] = mapped_column(JsonType, default=list)
     scan_schedule: Mapped[str] = mapped_column(String(10), default="daily")  # off|daily|weekly
-    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped[User] = relationship(back_populates="connections")
 
@@ -173,21 +172,6 @@ class AuditLog(TimestampMixin, Base):
     ip: Mapped[str | None] = mapped_column(String(64))
 
 
-class DemoInstance(TimestampMixin, Base):
-    """DEMO_MODE only: the fake 'live' EC2 state the fake executor mutates (so Apply/Undo behave)."""
-    __tablename__ = "demo_instances"
-    __table_args__ = (UniqueConstraint("connection_id", "instance_id", name="uq_demo_instance"),)
-    connection_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("aws_connections.id", ondelete="CASCADE"))
-    instance_id: Mapped[str] = mapped_column(String(32))
-    region: Mapped[str] = mapped_column(String(32))
-    instance_type: Mapped[str] = mapped_column(String(32))
-    state: Mapped[str] = mapped_column(String(20))
-    tags: Mapped[dict] = mapped_column(JsonType, default=dict)
-    cpu_credits: Mapped[str | None] = mapped_column(String(16))
-    public_ip: Mapped[str | None] = mapped_column(String(64))
-    has_eip: Mapped[bool] = mapped_column(Boolean, default=False)
-    fail_resize: Mapped[bool] = mapped_column(Boolean, default=False)
-
 
 __all__ = ["User", "AwsConnection", "Scan", "Finding", "RemediationAction", "SavingsLedger", "PriceCache",
-           "AuditLog", "DemoInstance", "FINDING_STATUSES", "ACTION_CODES"]
+           "AuditLog", "FINDING_STATUSES", "ACTION_CODES"]

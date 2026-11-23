@@ -30,14 +30,8 @@ class ConnectionBroken(AppError):
         super().__init__(409, "CONNECTION_BROKEN", message)
 
 
-def _no_aws_in_demo():
-    if get_settings().demo_mode:
-        raise RuntimeError("DEMO_MODE: AWS calls are disabled")
-
-
 def platform_session() -> boto3.Session:
     """OUR identity: dev keys from env if provided, otherwise IAM instance / task role."""
-    _no_aws_in_demo()
     s = get_settings()
     if s.platform_aws_access_key_id and s.platform_aws_secret_access_key:
         return boto3.Session(aws_access_key_id=s.platform_aws_access_key_id,
@@ -101,9 +95,6 @@ def mark_broken(db: Session, conn: AwsConnection, message: str) -> None:
 
 def get_session(db: Session, conn: AwsConnection) -> boto3.Session:
     """boto3 Session on cached temporary credentials; re-assumes when < 5 min remain."""
-    _no_aws_in_demo()
-    if conn.is_demo:
-        raise RuntimeError("demo connections never call AWS")
     if not conn.role_arn or conn.status not in ("connected", "broken"):
         raise ConnectionBroken("This AWS connection is not verified yet")
     creds = _load(conn)

@@ -21,7 +21,6 @@ def public_config():
     lim = {k: v.default for k, v in inspect.signature(d.classify_and_score).parameters.items()
            if v.default is not inspect.Parameter.empty}
     return {
-        "demo_mode": s.demo_mode,
         "platform_account_id": s.platform_aws_account_id,
         "version": __version__,
         "thresholds": {

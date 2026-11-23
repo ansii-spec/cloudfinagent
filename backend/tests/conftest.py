@@ -3,8 +3,8 @@ import tempfile
 
 _tmp = tempfile.mkdtemp()
 os.environ.update({
-    "DATABASE_URL": f"sqlite:///{_tmp}/test.db", "REDIS_URL": "redis://127.0.0.1:1/0", "DEMO_MODE": "true",
-    "CELERY_EAGER": "true", "DEMO_STEP_DELAY_S": "0", "WAITER_DELAY_S": "0", "WAITER_MAX_ATTEMPTS": "3",
+    "DATABASE_URL": f"sqlite:///{_tmp}/test.db", "REDIS_URL": "redis://127.0.0.1:1/0",
+    "CELERY_EAGER": "true", "WAITER_DELAY_S": "0", "WAITER_MAX_ATTEMPTS": "3",
     "SECRET_KEY": "test-secret-key-test-secret-key-0123", "AWS_DEFAULT_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "testing", "AWS_SECRET_ACCESS_KEY": "testing",
 })

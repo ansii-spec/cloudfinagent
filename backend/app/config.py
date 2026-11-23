@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     # platform AWS identity (pricing + AssumeRole via IAM Role or dev keys)
     platform_aws_account_id: str = "374073888140"
-    platform_principal_arn: str = "arn:aws:iam::374073888140:role/ec2opt-backend"
+    platform_principal_arn: str = "arn:aws:iam::374073888140:user/ec2opt-backend"
     platform_aws_access_key_id: str | None = None
     platform_aws_secret_access_key: str | None = None
     platform_aws_region: str = "us-east-1"
@@ -27,14 +27,12 @@ class Settings(BaseSettings):
     min_history_hours: int = 168
     apply_data_quality: bool = True
 
-    demo_mode: bool = False
     frontend_origin: str = "http://localhost:5173"
 
     # behaviour knobs
     jwt_expiry_hours: int = 8
     cookie_name: str = "ec2opt_session"
     celery_eager: bool = False                 # tests: run tasks inline
-    demo_step_delay_s: float = 1.0             # fake executor sleep per step
     waiter_delay_s: int = 15
     waiter_max_attempts: int = 40
     action_rate_limit_per_hour: int = 10

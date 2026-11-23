@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import {
-  useConnection, useCreateConnection, useCreateDemoConnection, usePublicConfig, useRegions, useStartScan,
+  useConnection, useCreateConnection, useRegions, useStartScan,
   useUpdateConnection, useVerifyConnection,
 } from '@/api/hooks'
 import { SecurityFlowDiagram } from '@/components/SecurityFlowDiagram'
@@ -68,11 +68,7 @@ export default function Connect() {
 }
 
 function StepAccess({ onCreated }: { onCreated: (id: string) => void }) {
-  const { data: cfg } = usePublicConfig()
   const create = useCreateConnection()
-  const demo = useCreateDemoConnection()
-  const { setConnectionId } = useConnectionCtx()
-  const navigate = useNavigate()
   const [actions, setActions] = useState(false)
   const [label, setLabel] = useState('Production')
   const cards = [
@@ -103,12 +99,6 @@ function StepAccess({ onCreated }: { onCreated: (id: string) => void }) {
         <Button disabled={create.isPending} onClick={() => create.mutate({ label: label || 'AWS account', enable_actions: actions }, {
           onSuccess: (w) => onCreated(w.id), onError: (e) => toast.error(e.message),
         })}>{create.isPending && <Loader2 className="animate-spin" />}Continue</Button>
-        {cfg?.demo_mode && (
-          <Button variant="outline" disabled={demo.isPending} onClick={() => demo.mutate(undefined, {
-            onSuccess: (c) => { setConnectionId(c.id); toast.success('Demo account connected — first scan running'); navigate('/recommendations') },
-            onError: (e) => toast.error(e.message),
-          })}>Use demo account</Button>
-        )}
       </div>
       <p className="mt-8 text-xs text-muted-foreground">You can revoke access any time by deleting the CloudFormation stack.</p>
     </div>

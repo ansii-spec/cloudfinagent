@@ -1,6 +1,6 @@
 """Static instance-type catalog + Linux on-demand list prices (us-east-1 style, USD/hour).
 
-Used ONLY where AWS must not be called: DEMO_MODE, fixture generation and tests. Real scans use
+Test-only fixed data so test results never depend on live AWS prices. The app itself uses
 describe_instance_types (family_ladder) and the Pricing API (pricing_service)."""
 from app.pipeline.detector import _type_info
 

@@ -1,4 +1,4 @@
-"""Apply / undo fixes in the user's AWS account (specs/05). Shared by the real and DEMO executors."""
+"""Apply / undo fixes in the user's AWS account (specs/05)."""
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -11,9 +11,8 @@ from app.core.deps import audit
 from app.core.errors import AppError
 from app.db import SessionLocal
 from app.models import AwsConnection, Finding, RemediationAction, User
-from app.pipeline import catalog
 from app.services import pricing_service
-from app.services.ec2_ops import AwsOps, DemoOps, OpError
+from app.services.ec2_ops import AwsOps, OpError
 
 log = logging.getLogger("remediation")
 HOURS_PER_MONTH = 730
@@ -35,8 +34,6 @@ def _aware(dt):
 
 
 def make_ops(db: Session, conn: AwsConnection, region: str):
-    if conn.is_demo:
-        return DemoOps(db, conn.id, region)
     from app.services import aws_session
     return AwsOps(aws_session.get_session(db, conn), region)
 
@@ -44,12 +41,8 @@ def make_ops(db: Session, conn: AwsConnection, region: str):
 def _price(conn: AwsConnection, t: str | None, region: str) -> float | None:
     if not t:
         return None
-    if conn.is_demo or get_settings().demo_mode:
-        return catalog.price(t, region)
     try:
-        from app.services import aws_session
-        pricing = aws_session.platform_session().client("pricing", region_name="us-east-1")
-        return pricing_service.get_price(t, region, pricing)
+        return pricing_service.get_price(t, region)
     except Exception:  # noqa: BLE001
         return None
 

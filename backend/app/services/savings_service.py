@@ -5,7 +5,6 @@ from datetime import date, datetime, time, timedelta, timezone
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.models import AwsConnection, Finding, RemediationAction, SavingsLedger, Scan
 
 log = logging.getLogger("savings")
@@ -79,16 +78,14 @@ def end_savings(a: RemediationAction, reason: str, when: datetime | None = None)
 
 
 def reconcile(db: Session) -> int:
-    """Stops accrual when the instance was changed outside the app. DEMO connections: no-op."""
+    """Stops accrual when the instance was changed outside the app."""
     from app.services import aws_session
     from app.services.ec2_ops import AwsOps
-    if get_settings().demo_mode:
-        return 0
     ended = 0
     actives = db.scalars(select(RemediationAction).where(RemediationAction.savings_active.is_(True)))
     for a in actives:
         conn = db.get(AwsConnection, a.connection_id)
-        if conn is None or conn.is_demo or conn.status != "connected":
+        if conn is None or conn.status != "connected":
             continue
         try:
             live = AwsOps(aws_session.get_session(db, conn), a.region).describe(a.instance_id)

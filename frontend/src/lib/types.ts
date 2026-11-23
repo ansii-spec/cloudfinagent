@@ -28,10 +28,11 @@ export interface Connection {
   last_verified_at: string | null
   regions: string[]
   scan_schedule: 'off' | 'daily' | 'weekly'
-  is_demo: boolean
   created_at: string | null
   wizard?: WizardPayload
 }
+
+export interface AwsCleanup { stack_name: string; role_name: string; console_url: string }
 
 export interface PolicyDoc { Version: string; Statement: Record<string, unknown>[] }
 
@@ -234,7 +235,6 @@ export interface DashboardSummary {
 }
 
 export interface PublicConfig {
-  demo_mode: boolean
   platform_account_id: string
   version: string
   thresholds: {
