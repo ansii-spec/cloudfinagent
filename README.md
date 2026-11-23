@@ -13,14 +13,28 @@ Finds **idle**, **over-provisioned** and **under-provisioned** EC2 instances in 
 
 No AWS access keys are ever accepted: users deploy a CloudFormation role (`aws/cloudformation-role.yaml`) that trusts our platform principal only with their unique **External ID**.
 
-## Quick start (demo, no AWS needed)
+## Quick start (One Command)
+
+To run the entire application stack (Database, Redis, Backend API, Worker, Beat, and Frontend Web):
 
 ```bash
-cp .env.example .env          # DEMO_MODE=true by default
-docker compose up --build
-docker compose exec api python -m app.scripts.seed_demo
+./run.sh
 ```
-Open http://localhost:5173 and log in as **demo@example.com / DemoPass123!**, or register and click **Use demo account** in the connect wizard.
+
+Or using Docker Compose directly:
+```bash
+docker compose up -d
+```
+
+Or using Make:
+```bash
+make run
+```
+
+Once running:
+- **Web App**: http://localhost:5173
+- **API Backend**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
 
 ### Without Docker
 ```bash
